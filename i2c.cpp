@@ -6,7 +6,7 @@
 #include <linux/i2c-dev.h>
 #include <cstdint>
 
-int openI2CBus(char* I2C_DEVICE, uint8_t MOTOR_DRIVER_ADDR) {
+int openI2CBus(const char* I2C_DEVICE, uint8_t MOTOR_DRIVER_ADDR) {
     int file = open(I2C_DEVICE, O_RDWR);
     if (file < 0) {
         std::cerr << "Failed to open I2C bus\n";

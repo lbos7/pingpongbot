@@ -11,7 +11,7 @@ int main() {
     const uint8_t MOTOR_FIXED_PWM_ADDR = 0x1F;
     const uint8_t MOTOR_FIXED_SPEED_ADDR = 0x33;
     const uint8_t MOTOR_ENCODER_TOTAL_ADDR = 0x3c;
-    char* I2C_DEVICE = "/dev/i2c-1";
+    const char* I2C_DEVICE = "/dev/i2c-1";
     int file;
     uint8_t motorType = 0;
     uint8_t encoderPolarity = 0;
