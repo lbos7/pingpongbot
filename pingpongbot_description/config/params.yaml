@@ -3,6 +3,5 @@
     wheel_radius: .03
     wheel_thickness: .0254
     wheel_offset_radius: .1608455
-    bottom_base_height: .05715
-    chassis_height: .155575
+    origin_to_chassis_top: .13335
     paddle_origin_offset: .1067562

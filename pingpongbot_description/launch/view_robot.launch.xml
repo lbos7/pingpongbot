@@ -2,7 +2,7 @@
     <arg name="use_jsp" default="gui" description="Which method of publishing joints: gui (default), jsp, or none"/>
 
     <node pkg="robot_state_publisher" exec="robot_state_publisher">
-        <param name="robot_description" value="$(command '$(exec-in-pkg xacro xacro) $(find-pkg-share pingpongbot_description)/pingpongbot.urdf.xacro')"/>
+        <param name="robot_description" value="$(command '$(exec-in-pkg xacro xacro) $(find-pkg-share pingpongbot_description)/urdf/pingpongbot.urdf.xacro')"/>
     </node>
 
     <group unless="$(eval '\'$(var use_jsp)\'==\'none\'')">
@@ -10,6 +10,6 @@
         <node pkg="joint_state_publisher" exec="joint_state_publisher" if="$(eval '\'$(var use_jsp)\'==\'jsp\'')"/>
     </group>
 
-    <!-- <node pkg="rviz2" exec="rviz2" args="-d $(find-pkg-share turtle_brick)/view_robot.rviz"/> -->
+    <node pkg="rviz2" exec="rviz2" args="-d $(find-pkg-share pingpongbot_description)/config/basic_config.rviz"/>
 
 </launch>
