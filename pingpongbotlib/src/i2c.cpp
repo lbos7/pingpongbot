@@ -1,10 +1,9 @@
-#include "i2c.hpp"
+#include "pingpongbotlib/i2c.hpp"
 #include <iostream>
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <linux/i2c-dev.h>
-#include <cstdint>
 
 int openI2CBus(const char* I2C_DEVICE, uint8_t MOTOR_DRIVER_ADDR) {
     int file = open(I2C_DEVICE, O_RDWR);
