@@ -15,6 +15,9 @@ namespace pingpongbotlib {
             const uint8_t motorFixedPWMAddr = 0x1F;
             const uint8_t motorFixedSpeedAddr = 0x33;
             const uint8_t motorEncoderTotalAddr = 0x3C;
+            const float motor1RPS2PWM = .60122;
+            const float motor2RPS2PWM = .61565;
+            const float motor3RPS2PWM = .61747;
 
         public:
             Driver();

@@ -7,45 +7,45 @@
 #include <numeric>
 #include <fstream>
 
-void saveIntVectorToCSV(const std::vector<int>& data, const std::string& filename) {
-    std::ofstream file(filename);
+// void saveIntVectorToCSV(const std::vector<int>& data, const std::string& filename) {
+//     std::ofstream file(filename);
     
-    if (!file.is_open()) {
-        std::cerr << "Error: Could not open file!\n";
-        return;
-    }
+//     if (!file.is_open()) {
+//         std::cerr << "Error: Could not open file!\n";
+//         return;
+//     }
 
-    for (size_t i = 0; i < data.size(); ++i) {
-        file << data[i];
-        if (i < data.size() - 1) {
-            file << ",";  // Separate values with commas
-        }
-    }
+//     for (size_t i = 0; i < data.size(); ++i) {
+//         file << data[i];
+//         if (i < data.size() - 1) {
+//             file << ",";  // Separate values with commas
+//         }
+//     }
 
-    file << "\n";  // Newline at the end
-    file.close();
-    std::cout << "Data saved to " << filename << "\n";
-}
+//     file << "\n";  // Newline at the end
+//     file.close();
+//     std::cout << "Data saved to " << filename << "\n";
+// }
 
-void saveDoubleVectorToCSV(const std::vector<double>& data, const std::string& filename) {
-    std::ofstream file(filename);
+// void saveDoubleVectorToCSV(const std::vector<double>& data, const std::string& filename) {
+//     std::ofstream file(filename);
     
-    if (!file.is_open()) {
-        std::cerr << "Error: Could not open file!\n";
-        return;
-    }
+//     if (!file.is_open()) {
+//         std::cerr << "Error: Could not open file!\n";
+//         return;
+//     }
 
-    for (size_t i = 0; i < data.size(); ++i) {
-        file << data[i];
-        if (i < data.size() - 1) {
-            file << ",";  // Separate values with commas
-        }
-    }
+//     for (size_t i = 0; i < data.size(); ++i) {
+//         file << data[i];
+//         if (i < data.size() - 1) {
+//             file << ",";  // Separate values with commas
+//         }
+//     }
 
-    file << "\n";  // Newline at the end
-    file.close();
-    std::cout << "Data saved to " << filename << "\n";
-}
+//     file << "\n";  // Newline at the end
+//     file.close();
+//     std::cout << "Data saved to " << filename << "\n";
+// }
 
 
 
@@ -101,17 +101,17 @@ int main() {
 
         pingpongbotlib::i2cRead(file, motorEncoderTotalAddr, encoderData, 16);
 
-        for (int i = 0; i < 4; i++) {
-            int32_t count = encoderData[i * 4] | (encoderData[i * 4 + 1] << 8) |
-                            (encoderData[i * 4 + 2] << 16) | (encoderData[i * 4 + 3] << 24);
-            if (i == 0) {
-                counts1.push_back(count);
-            } else if (i == 1) {
-                counts2.push_back(count);
-            } else if (i == 2) {
-                counts3.push_back(count);
-            }
-        }
+        // for (int i = 0; i < 4; i++) {
+        //     int32_t count = encoderData[i * 4] | (encoderData[i * 4 + 1] << 8) |
+        //                     (encoderData[i * 4 + 2] << 16) | (encoderData[i * 4 + 3] << 24);
+        //     if (i == 0) {
+        //         counts1.push_back(count);
+        //     } else if (i == 1) {
+        //         counts2.push_back(count);
+        //     } else if (i == 2) {
+        //         counts3.push_back(count);
+        //     }
+        // }
         
     }
     speed[0] = 0;
@@ -131,10 +131,10 @@ int main() {
         std::cout << "Motor " << (i + 1) << ": " << count << " pulses\n";
     }
 
-    saveDoubleVectorToCSV(times, "times_10.csv");
-    saveIntVectorToCSV(counts1, "counts1_10.csv");
-    saveIntVectorToCSV(counts2, "counts2_10.csv");
-    saveIntVectorToCSV(counts3, "counts3_10.csv");
+    // saveDoubleVectorToCSV(times, "times_10.csv");
+    // saveIntVectorToCSV(counts1, "counts1_10.csv");
+    // saveIntVectorToCSV(counts2, "counts2_10.csv");
+    // saveIntVectorToCSV(counts3, "counts3_10.csv");
 
     close(file);
     return 0;
