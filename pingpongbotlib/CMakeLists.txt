@@ -9,6 +9,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(SRC_FILES
     src/i2ctest.cpp
     src/i2c.cpp
+    src/driver.cpp
 )
 
 # Define project include directories

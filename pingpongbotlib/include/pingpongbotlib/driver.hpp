@@ -2,6 +2,7 @@
 #define DRIVER_HPP
 
 #include "pingpongbotlib/i2c.hpp"
+#include <array>
 
 namespace pingpongbotlib {
 
@@ -15,16 +16,23 @@ namespace pingpongbotlib {
             const uint8_t motorFixedPWMAddr = 0x1F;
             const uint8_t motorFixedSpeedAddr = 0x33;
             const uint8_t motorEncoderTotalAddr = 0x3C;
-            const float motor1RPS2PWM = .60122;
-            const float motor2RPS2PWM = .61565;
-            const float motor3RPS2PWM = .61747;
+            const float motor1RadPS2PWM = .60122;
+            const float motor2RadPS2PWM = .61565;
+            const float motor3RadPS2PWM = .61747;
+            const float radPerCount = .01570769;
+            const int file = pingpongbotlib::openI2CBus(i2cDevice, motorDriverAddr);
+            uint8_t motorType = 0;
+            uint8_t motorPolarity = 1;
+            std::array<int8_t, 3> getSpeeds();
+            std::array<int32_t, 3> getEncoderPulses();
+            void setup();
 
         public:
             Driver();
+            ~Driver();
             void setSpeeds(float speeds[3]);
-            int8_t getSpeeds();
             void resetEncoderPulses();
-            int32_t getEncoderPulses();
+            std::array<float, 3> getWheelAngles();
 
     };
 }
