@@ -1,6 +1,4 @@
 #include "pingpongbotlib/driver.hpp"
-#include <algorithm>
-#include <unistd.h>
 
 namespace pingpongbotlib {
 
@@ -22,14 +20,15 @@ namespace pingpongbotlib {
         return speeds;
     }
 
-    void Driver::setSpeeds(float speeds[3]) {
+    void Driver::setSpeeds(double speeds[3]) {
         bool done = false;
         bool speedsSet[3] = {false, false, false};
         int8_t speedInts[4] = {0, 0, 0, 0};
         std::array<int8_t, 3> speedsCheck;
+        // Note - Motor order is CCW due to driver, but wheel order is CW due to calcs
         speedInts[0] = (int8_t) (speeds[0] * this->motor1RadPS2PWM);
-        speedInts[1] = (int8_t) (speeds[1] * this->motor2RadPS2PWM * -1);
-        speedInts[2] = (int8_t) (speeds[2] * this->motor3RadPS2PWM);
+        speedInts[1] = (int8_t) (speeds[2] * this->motor2RadPS2PWM * -1);
+        speedInts[2] = (int8_t) (speeds[1] * this->motor3RadPS2PWM);
         for (int i = 0; i < 3; i++) {
             speedInts[i] = (int8_t) std::clamp((int)speedInts[i], -100, 100);
         }
@@ -64,13 +63,18 @@ namespace pingpongbotlib {
         pingpongbotlib::i2cWrite(this->file, this->motorEncoderPolarityAddr, &(this->motorPolarity), 1);
     }
 
-    std::array<float, 3> Driver::getWheelAngles() {
+    std::array<double, 3> Driver::getWheelAngles() {
         std::array<int32_t, 3> counts = this->getEncoderPulses();
-        std::array<float, 3> wheelAngles = {0.0, 0.0, 0.0};
+        std::array<double, 3> wheelAngles = {0.0, 0.0, 0.0};
+        std::array<double, 3> adjustedWheelAngles = {0.0, 0.0, 0.0};
         for (int i = 0; i < 3; i++) {
-            wheelAngles[i] = ((float) counts[i]) * this->radPerCount;
+            wheelAngles[i] = ((double) counts[i]) * this->radPerCount;
         }
-        return wheelAngles;
+        // Note - Motor order is CCW due to driver, but wheel order is CW due to calcs
+        adjustedWheelAngles[0] = wheelAngles[0];
+        adjustedWheelAngles[1] = wheelAngles[2];
+        adjustedWheelAngles[2] = wheelAngles[1];
+        return adjustedWheelAngles;
     }
 
     void Driver::resetEncoderPulses() {

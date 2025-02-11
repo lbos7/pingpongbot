@@ -10,6 +10,7 @@ set(SRC_FILES
     src/i2ctest.cpp
     src/i2c.cpp
     src/driver.cpp
+    src/kinematics.cpp
 )
 
 # Define project include directories
