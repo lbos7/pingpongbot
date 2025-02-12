@@ -66,7 +66,7 @@ namespace pingpongbotlib {
     pingpongbot_msgs::msg::WheelAngles Driver::getWheelAngles() {
         std::array<int32_t, 3> counts = this->getEncoderPulses();
         std::array<double, 3> wheelAngles = {0.0, 0.0, 0.0};
-        pingpongbot_msgs::msg::Angles adjustedWheelAngles;
+        pingpongbot_msgs::msg::WheelAngles adjustedWheelAngles;
         for (int i = 0; i < 3; i++) {
             wheelAngles[i] = ((double) counts[i]) * this->radPerCount;
         }

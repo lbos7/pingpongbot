@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.14)
 project(pingpongbotlib)
 
 # Find external dependencies
+find_package(ament_cmake REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(pingpongbot_msgs REQUIRED)
@@ -19,11 +20,17 @@ add_library(pingpongbotlib
     src/kinematics.cpp
 )
 
+ament_target_dependencies(pingpongbotlib
+  geometry_msgs
+  tf2
+  pingpongbot_msgs
+)
+
 # Link necessary libraries
 target_link_libraries(pingpongbotlib
-    tf2::tf2
-    geometry_msgs::geometry_msgs
-    pingpongbot_msgs::pingpongbot_msgs
+    # tf2::tf2
+    # geometry_msgs::geometry_msgs
+    # pingpongbot_msgs::pingpongbot_msgs
     pthread
     rt
     ${I2C_LIB}
@@ -40,12 +47,21 @@ target_include_directories(pingpongbotlib
 target_compile_features(pingpongbotlib PUBLIC cxx_std_17)
 
 # Install the library and headers
-install(TARGETS pingpongbotlib EXPORT pingpongbotlib-targets)
-install(DIRECTORY include/pingpongbotlib DESTINATION include)
+# install(TARGETS pingpongbotlib EXPORT pingpongbotlib-targets)
+# install(DIRECTORY include/pingpongbotlib DESTINATION include)
+install(DIRECTORY include/
+  DESTINATION include/
+)
+
+install(TARGETS pingpongbotlib
+  DESTINATION lib
+)
 
 # Export the CMake targets for other packages to find
-install(EXPORT pingpongbotlib-targets
-    FILE pingpongbotlib-config.cmake
-    NAMESPACE pingpongbotlib::
-    DESTINATION lib/cmake/${PROJECT_NAME}
-)
+# install(EXPORT pingpongbotlib-targets
+#     FILE pingpongbotlib-config.cmake
+#     NAMESPACE pingpongbotlib::
+#     DESTINATION lib/cmake/${PROJECT_NAME}
+# )
+
+ament_package()

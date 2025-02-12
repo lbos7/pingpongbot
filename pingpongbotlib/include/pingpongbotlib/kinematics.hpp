@@ -22,7 +22,7 @@ namespace pingpongbotlib {
             OmniDrive(const double d, const double r);
             pingpongbot_msgs::msg::WheelSpeeds twist2WheelSpeeds(geometry_msgs::msg::Twist twist);
             tf2::Transform odomUpdate(pingpongbot_msgs::msg::WheelAngles newWheelPositions);
-    }
+    };
 
 }
 
