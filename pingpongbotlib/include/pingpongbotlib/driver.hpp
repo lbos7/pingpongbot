@@ -1,10 +1,13 @@
 #ifndef DRIVER_HPP
 #define DRIVER_HPP
 
-#include "pingpongbotlib/i2c.hpp"
 #include <algorithm>
 #include <array>
 #include <unistd.h>
+
+#include "pingpongbotlib/i2c.hpp"
+#include "pingpongbot_msgs/msg/wheel_speeds.hpp"
+#include "pingpongbot_msgs/msg/wheel_angles.hpp"
 
 namespace pingpongbotlib {
 
@@ -32,9 +35,9 @@ namespace pingpongbotlib {
         public:
             Driver();
             ~Driver();
-            void setSpeeds(double speeds[3]);
+            void setSpeeds(pingpongbot_msgs::msg::WheelSpeeds speeds);
             void resetEncoderPulses();
-            std::array<double, 3> getWheelAngles();
+            pingpongbot_msgs::msg::WheelAngles getWheelAngles();
 
     };
 }

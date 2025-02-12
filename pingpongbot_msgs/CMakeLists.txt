@@ -27,6 +27,7 @@ endif()
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/WheelSpeeds.msg"
+  "msg/WheelAngles.msg"
   DEPENDENCIES builtin_interfaces
 )
 

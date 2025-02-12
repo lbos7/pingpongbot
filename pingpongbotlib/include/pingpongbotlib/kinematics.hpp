@@ -1,12 +1,12 @@
 #ifndef KINEMATICS_H
 #define KINEMATICS_H
 
-#include <array>
-
 #include "tf2/LinearMath/Quaternion.h"
 #include "tf2/LinearMath/Transform.h"
 #include "tf2/LinearMath/Vector3.h"
 #include "geometry_msgs/msg/twist.hpp"
+#include "pingpongbot_msgs/msg/wheel_speeds.hpp"
+#include "pingpongbot_msgs/msg/wheel_angles.hpp"
 
 namespace pingpongbotlib {
 
@@ -15,13 +15,13 @@ namespace pingpongbotlib {
         private:
             double d;
             double r;
-            std::array<double, 3> wheelPositions;
+            pingpongbot_msgs::msg::WheelAngles wheelPositions;
 
         public:
             OmniDrive(){}
             OmniDrive(const double d, const double r);
-            std::array<double, 3> twist2WheelSpeeds(geometry_msgs::msg::Twist twist);
-            tf2::Transform odomUpdate(std::array<double, 3> wheelDisplacements);
+            pingpongbot_msgs::msg::WheelSpeeds twist2WheelSpeeds(geometry_msgs::msg::Twist twist);
+            tf2::Transform odomUpdate(pingpongbot_msgs::msg::WheelAngles newWheelPositions);
     }
 
 }
