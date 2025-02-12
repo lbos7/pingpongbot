@@ -5,20 +5,20 @@
 #include "pingpongbot_msgs/msg/wheel_speeds.hpp"
 #include "pingpongbot_msgs/msg/wheel_angles.hpp"
 
-class Driver : public rclcpp::Node {
+class PingPongBotDriver : public rclcpp::Node {
     public:
-        Driver() : Node("driver") {
+        PingPongBotDriverr() : Node("pingpongbot_driver") {
 
             driver = pingpongbotlib::Driver();
 
             timer_ = this->create_wall_timer(
-                std::chrono::milliseconds(10), std::bind(&Driver::timer_callback, this);
+                std::chrono::milliseconds(10), std::bind(&PingPongBotDriver::timer_callback, this);
             )
 
             wheel_angles_pub_ = this->create_publisher<pingpongbot_msgs::msg::WheelAngles>("wheel_angles", 10);
 
             wheel_speeds_sub_ = this->create_subscription<pingpongbot_msgs::msg::WheelSpeeds>(
-                "wheel_speeds", 10, std::bind(&Driver::wheelSpeedsCallback, this, std::placeholders::_1));
+                "wheel_speeds", 10, std::bind(&PingPongBotDriver::wheelSpeedsCallback, this, std::placeholders::_1));
         }
 
     private:
@@ -37,7 +37,7 @@ class Driver : public rclcpp::Node {
 
 int main(int argc, char * argv[]) {
     rclcpp::init(argc, argv);
-    rclcpp::spin(std::make_shared<Driver>());
+    rclcpp::spin(std::make_shared<PingPongBotDriver>());
     rclcpp::shutdown();
     return 0;
 }

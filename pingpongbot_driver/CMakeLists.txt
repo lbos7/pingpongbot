@@ -11,12 +11,12 @@ find_package(rclcpp REQUIRED)
 find_package(pingpongbotlib REQUIRED)
 find_package(pingpongbot_msgs REQUIRED)
 
-add_executable(driver src/driver.cpp)
-ament_target_dependencies(driver rclcpp pingpongbot_msgs)
-target_link_libraries(driver pingpongbotlib::pingpongbotlib)
+add_executable(pingpongbot_driver src/pingpongbot_driver.cpp)
+ament_target_dependencies(pingpongbot_driver rclcpp pingpongbot_msgs)
+target_link_libraries(pingpongbot_driver pingpongbotlib::pingpongbotlib)
 
 install(TARGETS
-  driver
+  pingpongbot_driver
   DESTINATION lib/${PROJECT_NAME}
 )
 
