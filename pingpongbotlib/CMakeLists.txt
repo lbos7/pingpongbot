@@ -22,8 +22,8 @@ add_library(pingpongbotlib
 # Link necessary libraries
 target_link_libraries(pingpongbotlib
     tf2::tf2
-    pingpongbot_msgs::pingpongbot_msgs
     geometry_msgs::geometry_msgs
+    pingpongbot_msgs::pingpongbot_msgs
     pthread
     rt
     ${I2C_LIB}
