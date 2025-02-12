@@ -1,0 +1,8 @@
+<launch>
+    
+    <node pkg="pingpongbot_driver" exec="driver">
+        <remap from="wheel_speeds" to="wheel_speeds"/>
+        <remap from="wheel_angles" to="wheel_angles"/>
+    </node>
+
+</launch>

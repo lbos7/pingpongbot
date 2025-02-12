@@ -11,6 +11,20 @@ find_package(rclcpp REQUIRED)
 find_package(pingpongbotlib REQUIRED)
 find_package(pingpongbot_msgs REQUIRED)
 
+add_executable(driver src/driver.cpp)
+ament_target_dependencies(driver rclcpp pingpongbot_msgs)
+target_link_libraries(driver pingpongbotlib::pingpongbotlib)
+
+install(TARGETS
+  driver
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+install(DIRECTORY
+  launch
+  DESTINATION share/${PROJECT_NAME}/
+)
+
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   # the following line skips the linter which checks for copyrights
