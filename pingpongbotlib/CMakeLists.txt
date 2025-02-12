@@ -46,16 +46,17 @@ target_include_directories(pingpongbotlib
 # Ensure C++17 standard
 target_compile_features(pingpongbotlib PUBLIC cxx_std_17)
 
-# Install the library and headers
-# install(TARGETS pingpongbotlib EXPORT pingpongbotlib-targets)
-# install(DIRECTORY include/pingpongbotlib DESTINATION include)
 install(DIRECTORY include/
-  DESTINATION include/
+    DESTINATION include/${PROJECT_NAME}
 )
 
 install(TARGETS pingpongbotlib
-  DESTINATION lib
+  DESTINATION lib/${PROJECT_NAME}
 )
+
+# Install the library and headers
+# install(TARGETS pingpongbotlib EXPORT pingpongbotlib-targets)
+# install(DIRECTORY include/pingpongbotlib DESTINATION include)
 
 # Export the CMake targets for other packages to find
 # install(EXPORT pingpongbotlib-targets

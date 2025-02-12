@@ -13,7 +13,7 @@ find_package(pingpongbot_msgs REQUIRED)
 
 add_executable(pingpongbot_driver src/pingpongbot_driver.cpp)
 ament_target_dependencies(pingpongbot_driver rclcpp pingpongbot_msgs pingpongbotlib)
-# target_link_libraries(pingpongbot_driver pingpongbotlib::pingpongbotlib)
+# target_link_libraries(pingpongbot_driver pingpongbotlib)
 
 install(TARGETS
   pingpongbot_driver
@@ -22,7 +22,7 @@ install(TARGETS
 
 install(DIRECTORY
   launch
-  DESTINATION share/${PROJECT_NAME}/
+  DESTINATION share/${PROJECT_NAME}
 )
 
 if(BUILD_TESTING)
