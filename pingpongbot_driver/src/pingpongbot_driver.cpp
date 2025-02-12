@@ -1,15 +1,15 @@
 #include <chrono>
 
 #include "rclcpp/rclcpp.hpp"
-#include "pingpongbotlib/driver.hpp"
+#include "pingpongbot_driver/driver.hpp"
 #include "pingpongbot_msgs/msg/wheel_speeds.hpp"
 #include "pingpongbot_msgs/msg/wheel_angles.hpp"
 
 class PingPongBotDriver : public rclcpp::Node {
     public:
-        PingPongBotDriverr() : Node("pingpongbot_driver") {
+        PingPongBotDriver() : Node("pingpongbot_driver") {
 
-            driver = pingpongbotlib::Driver();
+            driver = pingpongbot_driver::Driver();
 
             timer_ = this->create_wall_timer(
                 std::chrono::milliseconds(10), std::bind(&PingPongBotDriver::timer_callback, this);

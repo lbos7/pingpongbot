@@ -5,11 +5,11 @@
 #include <array>
 #include <unistd.h>
 
-#include "pingpongbotlib/i2c.hpp"
+#include "pingpongbot_driver/i2c.hpp"
 #include "pingpongbot_msgs/msg/wheel_speeds.hpp"
 #include "pingpongbot_msgs/msg/wheel_angles.hpp"
 
-namespace pingpongbotlib {
+namespace pingpongbot_driver {
 
     class Driver {
 
@@ -25,7 +25,7 @@ namespace pingpongbotlib {
             const double motor2RadPS2PWM = .61565;
             const double motor3RadPS2PWM = .61747;
             const double radPerCount = .01570769;
-            const int file = pingpongbotlib::openI2CBus(i2cDevice, motorDriverAddr);
+            const int file = pingpongbot_driver::openI2CBus(i2cDevice, motorDriverAddr);
             uint8_t motorType = 0;
             uint8_t motorPolarity = 1;
             std::array<int8_t, 3> getSpeeds();

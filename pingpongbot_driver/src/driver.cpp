@@ -1,6 +1,6 @@
-#include "pingpongbotlib/driver.hpp"
+#include "pingpongbot_driver/driver.hpp"
 
-namespace pingpongbotlib {
+namespace pingpongbot_driver {
 
     Driver::Driver() {
         setup();
@@ -13,7 +13,7 @@ namespace pingpongbotlib {
     std::array<int8_t, 3> Driver::getSpeeds() {
         int8_t speedInts[4] = {0, 0, 0, 0};
         std::array<int8_t, 3> speeds;
-        pingpongbotlib::i2cRead(this->file, this->motorFixedPWMAddr, (uint8_t*)speedInts, 4);
+        pingpongbot_driver::i2cRead(this->file, this->motorFixedPWMAddr, (uint8_t*)speedInts, 4);
         for (int i = 0; i < 3; i++) {
             speeds[i] = speedInts[i];
         }
@@ -33,7 +33,7 @@ namespace pingpongbotlib {
             speedInts[i] = (int8_t) std::clamp((int)speedInts[i], -100, 100);
         }
         while (!done) {
-            pingpongbotlib::i2cWrite(this->file, this->motorFixedPWMAddr, (uint8_t*)speedInts, 4);
+            pingpongbot_driver::i2cWrite(this->file, this->motorFixedPWMAddr, (uint8_t*)speedInts, 4);
             speedsCheck = this->getSpeeds();
             for (int i = 0; i < 3; i++) {
                 speedsSet[i] = speedInts[i] == speedsCheck[i];
@@ -45,7 +45,7 @@ namespace pingpongbotlib {
     std::array<int32_t, 3> Driver::getEncoderPulses() {
         uint8_t encoderData[16];
         std::array<int32_t, 3> counts = {0, 0, 0};
-        pingpongbotlib::i2cRead(this->file, this->motorEncoderTotalAddr, encoderData, 16);
+        pingpongbot_driver::i2cRead(this->file, this->motorEncoderTotalAddr, encoderData, 16);
         for (int i = 0; i < 3; i++) {
             int32_t count = encoderData[i * 4] | (encoderData[i * 4 + 1] << 8) |
                             (encoderData[i * 4 + 2] << 16) | (encoderData[i * 4 + 3] << 24);
@@ -59,8 +59,8 @@ namespace pingpongbotlib {
     }
 
     void Driver::setup() {
-        pingpongbotlib::i2cWrite(this->file, this->motorTypeAddr, &(this->motorType), 1);
-        pingpongbotlib::i2cWrite(this->file, this->motorEncoderPolarityAddr, &(this->motorPolarity), 1);
+        pingpongbot_driver::i2cWrite(this->file, this->motorTypeAddr, &(this->motorType), 1);
+        pingpongbot_driver::i2cWrite(this->file, this->motorEncoderPolarityAddr, &(this->motorPolarity), 1);
     }
 
     pingpongbot_msgs::msg::WheelAngles Driver::getWheelAngles() {
@@ -83,7 +83,7 @@ namespace pingpongbotlib {
         std::array<int32_t, 3> counts;
         uint8_t encoderZero[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
         while (!done) {
-            pingpongbotlib::i2cWrite(this->file, this->motorEncoderTotalAddr, (uint8_t*)encoderZero, 16);
+            pingpongbot_driver::i2cWrite(this->file, this->motorEncoderTotalAddr, (uint8_t*)encoderZero, 16);
             counts = this->getEncoderPulses();
             for (int i = 0; i < 3; i++) {
                 countsReset[i] = counts[i] == 0;

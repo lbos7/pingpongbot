@@ -8,12 +8,10 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
-find_package(pingpongbotlib REQUIRED)
 find_package(pingpongbot_msgs REQUIRED)
 
 add_executable(pingpongbot_driver src/pingpongbot_driver.cpp)
-ament_target_dependencies(pingpongbot_driver rclcpp pingpongbot_msgs pingpongbotlib)
-# target_link_libraries(pingpongbot_driver pingpongbotlib)
+ament_target_dependencies(pingpongbot_driver rclcpp pingpongbot_msgs)
 
 install(TARGETS
   pingpongbot_driver
@@ -23,6 +21,11 @@ install(TARGETS
 install(DIRECTORY
   launch
   DESTINATION share/${PROJECT_NAME}
+)
+
+install(DIRECTORY 
+  include/
+  DESTINATION include/${PROJECT_NAME}
 )
 
 if(BUILD_TESTING)

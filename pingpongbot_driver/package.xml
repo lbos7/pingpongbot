@@ -13,7 +13,6 @@
   <test_depend>ament_lint_common</test_depend>
 
   <depend>rclcpp</depend>
-  <depend>pingpongbotlib</depend>
   <depend>pingpongbot_msgs</depend>
 
   <export>

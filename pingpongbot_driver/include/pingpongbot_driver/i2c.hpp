@@ -8,7 +8,7 @@
 #include <sys/ioctl.h>
 #include <linux/i2c-dev.h>
 
-namespace pingpongbotlib {
+namespace pingpongbot_driver {
 
     int openI2CBus(const char* I2C_DEVICE, uint8_t MOTOR_DRIVER_ADDR);
     bool i2cWrite(int file, uint8_t reg, uint8_t *data, size_t len);

@@ -1,6 +1,6 @@
-#include "pingpongbotlib/i2c.hpp"
+#include "pingpongbot_driver/i2c.hpp"
 
-namespace pingpongbotlib {
+namespace pingpongbot_driver {
 
     int openI2CBus(const char* I2C_DEVICE, uint8_t MOTOR_DRIVER_ADDR) {
         int file = open(I2C_DEVICE, O_RDWR);
