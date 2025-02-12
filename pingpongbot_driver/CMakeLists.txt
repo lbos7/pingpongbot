@@ -10,8 +10,14 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(pingpongbot_msgs REQUIRED)
 
-add_executable(pingpongbot_driver src/pingpongbot_driver.cpp)
+add_executable(pingpongbot_driver src/pingpongbot_driver.cpp src/driver.cpp)
 ament_target_dependencies(pingpongbot_driver rclcpp pingpongbot_msgs)
+
+target_include_directories(pingpongbot_driver
+  PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>  # during build
+  $<INSTALL_INTERFACE:include>  # during install
+)
 
 install(TARGETS
   pingpongbot_driver
@@ -27,6 +33,8 @@ install(DIRECTORY
   include/
   DESTINATION include/${PROJECT_NAME}
 )
+
+
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

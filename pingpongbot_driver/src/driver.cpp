@@ -13,7 +13,7 @@ namespace pingpongbot_driver {
     std::array<int8_t, 3> Driver::getSpeeds() {
         int8_t speedInts[4] = {0, 0, 0, 0};
         std::array<int8_t, 3> speeds;
-        pingpongbot_driver::i2cRead(this->file, this->motorFixedPWMAddr, (uint8_t*)speedInts, 4);
+        i2cRead(this->file, this->motorFixedPWMAddr, (uint8_t*)speedInts, 4);
         for (int i = 0; i < 3; i++) {
             speeds[i] = speedInts[i];
         }
@@ -33,7 +33,7 @@ namespace pingpongbot_driver {
             speedInts[i] = (int8_t) std::clamp((int)speedInts[i], -100, 100);
         }
         while (!done) {
-            pingpongbot_driver::i2cWrite(this->file, this->motorFixedPWMAddr, (uint8_t*)speedInts, 4);
+            i2cWrite(this->file, this->motorFixedPWMAddr, (uint8_t*)speedInts, 4);
             speedsCheck = this->getSpeeds();
             for (int i = 0; i < 3; i++) {
                 speedsSet[i] = speedInts[i] == speedsCheck[i];
@@ -45,7 +45,7 @@ namespace pingpongbot_driver {
     std::array<int32_t, 3> Driver::getEncoderPulses() {
         uint8_t encoderData[16];
         std::array<int32_t, 3> counts = {0, 0, 0};
-        pingpongbot_driver::i2cRead(this->file, this->motorEncoderTotalAddr, encoderData, 16);
+        i2cRead(this->file, this->motorEncoderTotalAddr, encoderData, 16);
         for (int i = 0; i < 3; i++) {
             int32_t count = encoderData[i * 4] | (encoderData[i * 4 + 1] << 8) |
                             (encoderData[i * 4 + 2] << 16) | (encoderData[i * 4 + 3] << 24);
@@ -59,8 +59,8 @@ namespace pingpongbot_driver {
     }
 
     void Driver::setup() {
-        pingpongbot_driver::i2cWrite(this->file, this->motorTypeAddr, &(this->motorType), 1);
-        pingpongbot_driver::i2cWrite(this->file, this->motorEncoderPolarityAddr, &(this->motorPolarity), 1);
+        i2cWrite(this->file, this->motorTypeAddr, &(this->motorType), 1);
+        i2cWrite(this->file, this->motorEncoderPolarityAddr, &(this->motorPolarity), 1);
     }
 
     pingpongbot_msgs::msg::WheelAngles Driver::getWheelAngles() {
@@ -83,12 +83,42 @@ namespace pingpongbot_driver {
         std::array<int32_t, 3> counts;
         uint8_t encoderZero[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
         while (!done) {
-            pingpongbot_driver::i2cWrite(this->file, this->motorEncoderTotalAddr, (uint8_t*)encoderZero, 16);
+            i2cWrite(this->file, this->motorEncoderTotalAddr, (uint8_t*)encoderZero, 16);
             counts = this->getEncoderPulses();
             for (int i = 0; i < 3; i++) {
                 countsReset[i] = counts[i] == 0;
             }
             done = countsReset[0] && countsReset[1] && countsReset[2];
         }
+    }
+
+    int openI2CBus(const char* I2C_DEVICE, uint8_t MOTOR_DRIVER_ADDR) {
+        int file = open(I2C_DEVICE, O_RDWR);
+        if (file < 0) {
+            std::cerr << "Failed to open I2C bus\n";
+            return -1;
+        }
+        if (ioctl(file, I2C_SLAVE, MOTOR_DRIVER_ADDR) < 0) {
+            std::cerr << "Failed to connect to motor driver\n";
+            return -1;
+        }
+        return file;
+    }
+
+    bool i2cWrite(int file, uint8_t reg, uint8_t *data, size_t len) {
+        uint8_t buffer[len + 1];
+        buffer[0] = reg;
+        for (size_t i = 0; i < len; i++) {
+            buffer[i + 1] = data[i];
+        }
+        return write(file, buffer, len + 1) == len + 1;
+    }
+
+    bool i2cRead(int file, uint8_t reg, uint8_t *data, size_t len) {
+        if (write(file, &reg, 1) != 1) {
+            std::cerr << "Error setting register address\n";
+            return false;
+        }
+        return read(file, data, len) == len;
     }
 }
