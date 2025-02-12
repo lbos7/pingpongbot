@@ -21,7 +21,7 @@
 
     <link name="base_link">
         <visual>
-            <origin xyz="0.0 0.0 0.0" rpy="0 0 0"/>
+            <origin xyz="0.0 0.0 0.0" rpy="0 0 ${pi}"/>
             <geometry>
                 <mesh filename="package://pingpongbot_description/meshes/chassis.stl" scale="1.0 1.0 1.0"/>
             </geometry>
@@ -39,7 +39,7 @@
     <joint name="wheel1_joint" type="continuous">
         <parent link="base_link"/>
         <child link="wheel1"/>
-        <origin xyz="0.0 ${-wheel_offset_radius} 0.0" rpy="${pi/2} 0 0"/>
+        <origin xyz="0.0 ${wheel_offset_radius} 0.0" rpy="${pi/2} 0 ${pi}"/>
         <axis xyz="0 0 1"/>
     </joint>
 
@@ -63,7 +63,7 @@
     <joint name="wheel2_joint" type="continuous">
         <parent link="base_link"/>
         <child link="wheel2"/>
-        <origin xyz="${wheel_offset_radius*sin(pi/3)} ${wheel_offset_radius*cos(pi/3)} 0.0" rpy="0 ${pi/2} ${pi/6}"/>
+        <origin xyz="${wheel_offset_radius*sin(pi/3)} ${-wheel_offset_radius*cos(pi/3)} 0.0" rpy="${pi/2} 0 ${pi/3}"/>
         <axis xyz="0 0 1"/>
     </joint>
 
@@ -87,7 +87,7 @@
     <joint name="wheel3_joint" type="continuous">
         <parent link="base_link"/>
         <child link="wheel3"/>
-        <origin xyz="${-wheel_offset_radius*sin(pi/3)} ${wheel_offset_radius*cos(pi/3)} 0.0" rpy="0 ${-pi/2} ${-pi/6}"/>
+        <origin xyz="${-wheel_offset_radius*sin(pi/3)} ${-wheel_offset_radius*cos(pi/3)} 0.0" rpy="${pi/2} 0 ${-pi/3}"/>
         <axis xyz="0 0 1"/>
     </joint>
 
@@ -111,7 +111,7 @@
     <joint name="base_to_paddle" type="fixed">
         <parent link="base_link"/>
         <child link="paddle"/>
-        <origin xyz="0.0 0.0 ${origin_to_chassis_top}" rpy="0 0 ${pi}"/>
+        <origin xyz="0.0 0.0 ${origin_to_chassis_top}" rpy="0 0 0"/>
     </joint>
 
     <link name="paddle">

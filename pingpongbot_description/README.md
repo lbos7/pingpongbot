@@ -9,5 +9,5 @@ Includes meshes for the chassis, omniwheels, and paddle.
 
 ## RVIZ Window
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/f7c582f9-70cc-4d3d-9bc6-3630208496b0"/>
+  <img src="https://github.com/user-attachments/assets/4d9c21e9-de39-4d82-8754-a196270a2ebb"/>
 </p>
