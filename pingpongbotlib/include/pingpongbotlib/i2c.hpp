@@ -2,6 +2,11 @@
 #define I2C_H
 #include <cstdint>
 #include <stddef.h>
+#include <iostream>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/ioctl.h>
+#include <linux/i2c-dev.h>
 
 namespace pingpongbotlib {
 

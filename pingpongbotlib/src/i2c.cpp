@@ -1,9 +1,4 @@
 #include "pingpongbotlib/i2c.hpp"
-#include <iostream>
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/ioctl.h>
-#include <linux/i2c-dev.h>
 
 namespace pingpongbotlib {
 
