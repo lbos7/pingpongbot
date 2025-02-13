@@ -11,6 +11,7 @@ class PingPongBotDriver : public rclcpp::Node {
         PingPongBotDriver() : Node("pingpongbot_driver") {
 
             driver = pingpongbot_driver::Driver();
+            driver.resetEncoderPulses();
 
             timer_ = this->create_wall_timer(
                 std::chrono::milliseconds(10), std::bind(&PingPongBotDriver::timerCallback, this));
