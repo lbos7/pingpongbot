@@ -21,7 +21,13 @@ namespace pingpongbot_control {
         return wheelSpeeds;
     }
 
-    tf2::Transform OmniDrive::odomUpdate(pingpongbot_msgs::msg::WheelAngles newWheelPositions) {
+    tf2::Transform OmniDrive::odomUpdate(sensor_msgs::msg::JointState newState) {
+
+        pingpongbot_msgs::msg::WheelAngles newWheelPositions;
+        newWheelPositions.theta1 = newState.position[0];
+        newWheelPositions.theta1 = newState.position[1];
+        newWheelPositions.theta1 = newState.position[2];
+
         double dtheta1 = newWheelPositions.theta1 - this->wheelPositions.theta1;
         double dtheta2 = newWheelPositions.theta2 - this->wheelPositions.theta2;
         double dtheta3 = newWheelPositions.theta3 - this->wheelPositions.theta3;

@@ -4,7 +4,12 @@
 #include "tf2/LinearMath/Quaternion.h"
 #include "tf2/LinearMath/Transform.h"
 #include "tf2/LinearMath/Vector3.h"
+#include "tf2_ros/transform_broadcaster.h"
+#include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 #include "sensor_msgs/msg/joint_state.hpp"
+#include "nav_msgs/msg/odometry.hpp"
+#include "geometry_msgs/msg/twist.hpp"
+#include "geometry_msgs/msg/transform_stamped.hpp"
 #include "pingpongbot_msgs/msg/wheel_speeds.hpp"
 #include "pingpongbot_msgs/msg/wheel_angles.hpp"
 #include "pingpongbot_control/kinematics.hpp"
@@ -24,24 +29,83 @@ class Controller : public rclcpp::Node {
             timer_ = this->create_wall_timer(
                 std::chrono::milliseconds(10), std::bind(&Controller::timerCallback, this));
 
+            odom_pub_ = this->create_publisher<nav_msgs::msg::Odometry>("odom", 10);
+
+            wheel_speeds_pub_ = this->create_subscription<pingpongbot_msgs::msg::WheelSpeeds>("wheel_speeds", 10);
+
+            wheel_angles_pub_ = this->create_publisher<pingpongbot_msgs::msg::WheelAngles>("wheel_angles", 10);
+
             joint_state_sub_ = this->create_subscription<sensor_msgs::msg::JointState>(
                 "joint_states", 10, std::bind(&Controller::jointStateCallback, this, std::placeholders::_1));
+
+            cmd_vel_sub_ = this->create_subscription<geometry_msgs::msg::Twist>(
+                "wheel_speeds", 10, std::bind(&Controller::cmdVelCallback, this, std::placeholders::_1));
+
+            tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
         }
 
     private:
-        void timerCallback() {
-            
+        void jointStateCallback(const sensor_msgs::msg::JointState & msg) {
+            auto current_time = this->get_clock()->now();
+            if (!first_joints_cb) {
+                auto relative_trans = omni_drive.odomUpdate(msg);
+                auto new_trans = prev_trans * relative_trans;
+
+                auto dt = (current_time - prev_time).seconds();
+                odom_msg.header.stamp = current_time;
+                odom_msg.pose.pose.position.x = new_trans.getOrigin().x();
+                odom_msg.pose.pose.position.y = new_trans.getOrigin().y();
+
+                odom_msg.pose.pose.orientation = tf2::toMsg(new_trans.getRotation().normalized());
+                
+                odom_msg.twist.twist.linear.x =
+                    (new_trans.getOrigin().x() - prev_trans.getOrigin().x()) / dt;
+                odom_msg.twist.twist.linear.y =
+                    (new_trans.getOrigin().y() - prev_trans.getOrigin().y()) / dt;
+
+                auto new_trans_rotation = new_trans.getRotation().normalized();
+                auto prev_trans_rotation = prev_trans.getRotation().normalized();
+
+                double new_yaw, new_pitch, new_roll;
+                tf2::getEulerYPR(new_trans_rotation, new_yaw, new_pitch, new_roll);
+
+                double prev_yaw, prev_pitch, prev_roll;
+                tf2::getEulerYPR(prev_trans_rotation, prev_yaw, prev_pitch, prev_roll);
+
+                odom_msg.twist.twist.angular.z = (new_yaw - prev_yaw) / dt;
+
+                odom_trans.header.stamp = current_time;
+                odom_trans.transform.translation.x = new_transform.getOrigin().x();
+                odom_trans.transform.translation.y = new_transform.getOrigin().y();
+                odom_trans.transform.rotation = tf2::toMsg(new_transform.getRotation().normalized());
+
+                prev_trans = new_trans;
+            } else {
+                first_joints_cb = false;
+            }
+            prev_time = current_time;
         }
 
-        void jointStateCallback(const sensor_msgs::msg::JointState & msg) {
-            currentJointState = msg;
+        void cmdVelCallback(const geometry_msgs::msg::Twist & msg) {
+            auto speeds = omni_drive.twist2WheelSpeeds(msg);
+            wheel_speeds_pub_->publish(speeds);
         }
 
         double d, r;
-        sensor_msgs::msg::JointState currentJointState;
+        bool first_joints_cb = true;
         pingpongbot_control::OmniDrive omni_drive;
+        tf2::Transform prev_trans = tf2::Transform();
+        sensor_msgs::msg::JointState currentJointState;
+        nav_msgs::msg::Odometry odom_msg;
+        geometry_msgs::msg::TransformStamped odom_trans;
+        rclcpp::Time prev_time;
         rclcpp::TimerBase::SharedPtr timer_;
+        rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
+        rclcpp::Publisher<pingpongbot_msgs::msg::WheelSpeeds>::SharedPtr wheel_speeds_pub_;
+        rclcpp::Publisher<pingpongbot_msgs::msg::WheelAngles>::SharedPtr wheel_angles_pub_;
         rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_state_sub_;
+        rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_sub_;
+        std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
 };
 
 int main(int argc, char ** argv) {
