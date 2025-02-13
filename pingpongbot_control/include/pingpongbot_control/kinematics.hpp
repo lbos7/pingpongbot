@@ -8,7 +8,7 @@
 #include "pingpongbot_msgs/msg/wheel_speeds.hpp"
 #include "pingpongbot_msgs/msg/wheel_angles.hpp"
 
-namespace pingpongbotlib {
+namespace pingpongbot_control {
 
     class OmniDrive {
 

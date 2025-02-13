@@ -1,6 +1,6 @@
 #include "pingpongbotlib/kinematics.hpp"
 
-namespace pingpongbotlib {
+namespace pingpongbot_control {
 
     OmniDrive::OmniDrive(const double d, const double r) {
         this->d = d;
