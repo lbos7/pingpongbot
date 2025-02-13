@@ -1,9 +1,7 @@
 #include <chrono>
 
 #include "rclcpp/rclcpp.hpp"
-#include "tf2/LinearMath/Quaternion.h"
 #include "tf2/LinearMath/Transform.h"
-#include "tf2/LinearMath/Vector3.h"
 #include "tf2_ros/transform_broadcaster.h"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 #include "sensor_msgs/msg/joint_state.hpp"
@@ -14,10 +12,10 @@
 #include "pingpongbot_msgs/msg/wheel_angles.hpp"
 #include "pingpongbot_control/kinematics.hpp"
 
-class Controller : public rclcpp::Node {
+class OdometryUpdate: public rclcpp::Node {
 
     public:
-        Controller() : Node("controller") {
+        OdometryUpdate() : Node("odom_update") {
             this->declare_parameter("d", rclcpp::ParameterType::PARAMETER_DOUBLE);
             this->declare_parameter("r", rclcpp::ParameterType::PARAMETER_DOUBLE);
 
@@ -27,7 +25,7 @@ class Controller : public rclcpp::Node {
             omni_drive = pingpongbot_control::OmniDrive(d, r);
 
             timer_ = this->create_wall_timer(
-                std::chrono::milliseconds(10), std::bind(&Controller::timerCallback, this));
+                std::chrono::milliseconds(10), std::bind(&OdometryUpdate::timerCallback, this));
 
             odom_pub_ = this->create_publisher<nav_msgs::msg::Odometry>("odom", 10);
 
@@ -36,10 +34,10 @@ class Controller : public rclcpp::Node {
             wheel_angles_pub_ = this->create_publisher<pingpongbot_msgs::msg::WheelAngles>("wheel_angles", 10);
 
             joint_state_sub_ = this->create_subscription<sensor_msgs::msg::JointState>(
-                "joint_states", 10, std::bind(&Controller::jointStateCallback, this, std::placeholders::_1));
+                "joint_states", 10, std::bind(&OdometryUpdate::jointStateCallback, this, std::placeholders::_1));
 
             cmd_vel_sub_ = this->create_subscription<geometry_msgs::msg::Twist>(
-                "wheel_speeds", 10, std::bind(&Controller::cmdVelCallback, this, std::placeholders::_1));
+                "wheel_speeds", 10, std::bind(&OdometryUpdate::cmdVelCallback, this, std::placeholders::_1));
 
             tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
         }
@@ -110,7 +108,7 @@ class Controller : public rclcpp::Node {
 
 int main(int argc, char ** argv) {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<Controller>());
+  rclcpp::spin(std::make_shared<OdometryUpdate>());
   rclcpp::shutdown();
   return 0;
 }
