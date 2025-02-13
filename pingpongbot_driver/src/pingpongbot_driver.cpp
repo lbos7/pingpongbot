@@ -12,7 +12,7 @@ class PingPongBotDriver : public rclcpp::Node {
             driver = pingpongbot_driver::Driver();
 
             timer_ = this->create_wall_timer(
-                std::chrono::milliseconds(10), std::bind(&PingPongBotDriver::timer_callback, this));
+                std::chrono::milliseconds(10), std::bind(&PingPongBotDriver::timerCallback, this));
 
             wheel_angles_pub_ = this->create_publisher<pingpongbot_msgs::msg::WheelAngles>("wheel_angles", 10);
 
@@ -21,12 +21,12 @@ class PingPongBotDriver : public rclcpp::Node {
         }
 
     private:
-        void timer_callback() {
+        void timerCallback() {
             auto msg = driver.getWheelAngles();
             wheel_angles_pub_->publish(msg);
         }
 
-        void wheelSpeedsCallback(const pingpongbot_msgs::msg::WheelSpeeds msg) {
+        void wheelSpeedsCallback(const pingpongbot_msgs::msg::WheelSpeeds & msg) {
             driver.setSpeeds(msg);
         }
 

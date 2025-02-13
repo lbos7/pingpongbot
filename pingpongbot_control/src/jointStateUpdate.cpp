@@ -10,7 +10,7 @@ class JointStateUpdate : public rclcpp::Node {
     public:
         JointStateUpdate() : Node("joint_state_update") {
             timer_ = this->create_wall_timer(
-                std::chrono::milliseconds(10), std::bind(&JointStateUpdate::timer_callback, this));
+                std::chrono::milliseconds(10), std::bind(&JointStateUpdate::timerCallback, this));
 
             joint_state_pub_ = this->create_publisher<sensor_msgs::msg::JointState>("joint_states", 10);
 
@@ -19,10 +19,11 @@ class JointStateUpdate : public rclcpp::Node {
 
             wheel_angles_sub_ = this->create_subscription<pingpongbot_msgs::msg::WheelAngles>(
                 "wheel_angles", 10, std::bind(&JointStateUpdate::wheelAnglesCallback, this, std::placeholders::_1));
+            
         }
 
     private:
-        void timer_callback() {
+        void timerCallback() {
             sensor_msgs::msg::JointState msg;
             msg.header.stamp = this->get_clock()->now();
             msg.name = {"wheel1_joint", "wheel2_joint", "wheel3_joint"};
@@ -31,11 +32,11 @@ class JointStateUpdate : public rclcpp::Node {
             this->joint_state_pub_->publish(msg);
         }
 
-        void wheelSpeedsCallback(const pingpongbot_msgs::msg::WheelSpeeds msg) {
+        void wheelSpeedsCallback(const pingpongbot_msgs::msg::WheelSpeeds & msg) {
             currentSpeeds = msg;
         }
         
-        void wheelAnglesCallback(const pingpongbot_msgs::msg::WheelAngles msg) {
+        void wheelAnglesCallback(const pingpongbot_msgs::msg::WheelAngles & msg) {
             currentAngles = msg;
         }
 
