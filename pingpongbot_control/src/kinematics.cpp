@@ -1,4 +1,4 @@
-#include "pingpongbotlib/kinematics.hpp"
+#include "pingpongbot_control/kinematics.hpp"
 
 namespace pingpongbot_control {
 
