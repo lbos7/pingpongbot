@@ -24,8 +24,11 @@ class JointStateUpdate : public rclcpp::Node {
     private:
         void timer_callback() {
             sensor_msgs::msg::JointState msg;
+            msg.header.stamp = this->get_clock()->now();
+            msg.name = {"wheel1_joint", "wheel2_joint", "wheel3_joint"};
             msg.velocity = {currentSpeeds.u1, currentSpeeds.u2, currentSpeeds.u3};
             msg.position = {currentAngles.theta1, currentAngles.theta2, currentAngles.theta3};
+            this->joint_state_pub_->publish(msg);
         }
 
         void wheelSpeedsCallback(const pingpongbot_msgs::msg::WheelSpeeds msg) {
