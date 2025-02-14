@@ -1,4 +1,5 @@
 #include <chrono>
+#include <string>
 
 #include "rclcpp/rclcpp.hpp"
 #include "tf2/LinearMath/Transform.h"
@@ -18,11 +19,18 @@ class OdometryUpdate: public rclcpp::Node {
         OdometryUpdate() : Node("odom_update") {
             this->declare_parameter("d", rclcpp::ParameterType::PARAMETER_DOUBLE);
             this->declare_parameter("r", rclcpp::ParameterType::PARAMETER_DOUBLE);
+            this->declare_parameter("odom_id", "odom");
+            this->declare_parameter("base_id", "base_footprint");
 
             d = this->get_parameter("d").as_double();
             r = this->get_parameter("r").as_double();
+            odom_id = this->get_parameter("odom_id").as_string();
+            base_id = this->get_parameter("base_id").as_string();
 
             omni_drive = pingpongbot_control::OmniDrive(d, r);
+
+            odom_trans.header.frame_id = odom_id;
+            odom_trans.child_frame_id = base_id;
 
             timer_ = this->create_wall_timer(
                 std::chrono::milliseconds(10), std::bind(&OdometryUpdate::timerCallback, this));
@@ -90,6 +98,8 @@ class OdometryUpdate: public rclcpp::Node {
         }
 
         double d, r;
+        std::string odom_id;
+        std::string base_id;
         bool first_joints_cb = true;
         pingpongbot_control::OmniDrive omni_drive;
         tf2::Transform prev_trans = tf2::Transform();
