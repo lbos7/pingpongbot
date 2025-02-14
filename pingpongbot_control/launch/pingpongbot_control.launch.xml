@@ -23,6 +23,7 @@
     <node pkg="pingpongbot_control" exec="controller">
         <remap from="cmd_vel" to="cmd_vel"/>
         <remap from="goal_pose" to="goal_pose"/>
+        <remap from="shutdown" to="shutdown"/>
         <param from="$(find-pkg-share pingpongbot_control)/config/controller.yaml"/>
     </node>
 

@@ -6,6 +6,7 @@
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include "geometry_msgs/msg/twist.hpp"
+#include "std_msgs/msg/empty.hpp"
 #include "tf2/LinearMath/Quaternion.h"
 #include "tf2/exceptions.h"
 #include "tf2/utils.h"
@@ -52,12 +53,20 @@ class Controller : public rclcpp::Node {
 
             cmd_vel_pub_ = this->create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 10);
 
+            shutdown_pub_ = this->create_publisher<std_msgs::msg::Empty>("shutdown", 10);
+
             goal_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
                 "goal_pose", 10, std::bind(&Controller::goalPoseCallback, this, std::placeholders::_1));
             
             tf_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
             tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
-            
+
+        }
+
+        ~Controller() {
+            RCLCPP_INFO(this->get_logger(), "Shutting down PingPongBotDriver...");
+            geometry_msgs::msg::Twist zero = geometry_msgs::msg::Twist();
+            cmd_vel_pub_->publish(zero);
         }
     
     private:
@@ -156,6 +165,7 @@ class Controller : public rclcpp::Node {
         geometry_msgs::msg::Twist commandedTwist;
         rclcpp::TimerBase::SharedPtr timer_;
         rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_pub_;
+        rclcpp::Publisher<std_msgs::msg::Empty>::SharedPtr shutdown_pub_;
         rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr goal_pose_sub_;
         std::shared_ptr<tf2_ros::TransformListener> tf_listener_{nullptr};
         std::unique_ptr<tf2_ros::Buffer> tf_buffer_;

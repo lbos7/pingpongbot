@@ -10,6 +10,6 @@
         <node pkg="joint_state_publisher" exec="joint_state_publisher" if="$(eval '\'$(var use_jsp)\'==\'jsp\'')"/>
     </group>
 
-    <node pkg="rviz2" exec="rviz2" args="-d $(find-pkg-share pingpongbot_description)/config/basic_config.rviz"/>
+    <node pkg="rviz2" exec="rviz2" args="-d $(find-pkg-share pingpongbot_description)/config/config.rviz"/>
 
 </launch>

@@ -3,7 +3,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "tf2/LinearMath/Transform.h"
-#include "tf2/LinearMath/Transform.h"
+#include "tf2/LinearMath/Quaternion.h"
 #include "tf2_ros/transform_broadcaster.h"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 #include "tf2/utils.h"
@@ -51,6 +51,15 @@ class OdometryUpdate: public rclcpp::Node {
             tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
         }
 
+        ~OdometryUpdate() {
+            RCLCPP_INFO(this->get_logger(), "Shutting down PingPongBotDriver...");
+            pingpongbot_msgs::msg::WheelSpeeds zero = pingpongbot_msgs::msg::WheelSpeeds();
+            zero.u1 = 0;
+            zero.u2 = 0;
+            zero.u3 = 0;
+            wheel_speeds_pub_->publish(zero);
+        }
+
     private:
         void jointStateCallback(const sensor_msgs::msg::JointState & msg) {
             auto current_time = this->get_clock()->now();
@@ -94,6 +103,13 @@ class OdometryUpdate: public rclcpp::Node {
                 prev_trans = new_trans;
             } else {
                 first_joints_cb = false;
+                odom_trans = geometry_msgs::msg::TransformStamped();
+                odom_trans.header.stamp = current_time;
+                odom_trans.header.frame_id = odom_id;
+                odom_trans.child_frame_id = base_id;
+                geometry_msgs::msg::Transform trans = odom_trans.transform;
+                tf2::fromMsg(trans, prev_trans);
+                tf_broadcaster_->sendTransform(odom_trans);
 
             }
             prev_time = current_time;
@@ -109,7 +125,7 @@ class OdometryUpdate: public rclcpp::Node {
         std::string base_id;
         bool first_joints_cb = true;
         pingpongbot_control::OmniDrive omni_drive;
-        tf2::Transform prev_trans;
+        tf2::Transform prev_trans = tf2::Transform();
         sensor_msgs::msg::JointState currentJointState;
         nav_msgs::msg::Odometry odom_msg;
         geometry_msgs::msg::TransformStamped odom_trans;
