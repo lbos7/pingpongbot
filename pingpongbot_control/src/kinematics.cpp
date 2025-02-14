@@ -16,9 +16,11 @@ namespace pingpongbot_control {
 
         wheelSpeeds.u1 = (double) (1/this->r)*(-this->d*wz + vx);
         wheelSpeeds.u2 = (double) (1/this->r)*(-this->d*wz - .5*vx - (pow(3, .5)/2)*vy);
-        wheelSpeeds.u2 = (double) (1/this->r)*(-this->d*wz - .5*vx + (pow(3, .5)/2)*vy);
+        wheelSpeeds.u3 = (double) (1/this->r)*(-this->d*wz - .5*vx + (pow(3, .5)/2)*vy);
+
         
-        return wheelSpeeds;
+
+            return wheelSpeeds;
     }
 
     tf2::Transform OmniDrive::odomUpdate(sensor_msgs::msg::JointState newState) {

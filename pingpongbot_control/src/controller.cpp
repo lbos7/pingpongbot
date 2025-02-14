@@ -31,7 +31,7 @@ class Controller : public rclcpp::Node {
             this->declare_parameter("Kd_ang", rclcpp::ParameterType::PARAMETER_DOUBLE);
             this->declare_parameter("odom_id", "odom");
             this->declare_parameter("base_id", "base_footprint");
-            this->declare_parameter("thresh_lin", 0.55);
+            this->declare_parameter("thresh_lin", 0.055);
             this->declare_parameter("thresh_ang", 0.0349066);
 
             Kp_x = this->get_parameter("Kp_x").as_double();
