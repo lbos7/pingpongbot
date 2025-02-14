@@ -45,7 +45,7 @@ class OdometryUpdate: public rclcpp::Node {
                 "joint_states", 10, std::bind(&OdometryUpdate::jointStateCallback, this, std::placeholders::_1));
 
             cmd_vel_sub_ = this->create_subscription<geometry_msgs::msg::Twist>(
-                "wheel_speeds", 10, std::bind(&OdometryUpdate::cmdVelCallback, this, std::placeholders::_1));
+                "cmd_vel", 10, std::bind(&OdometryUpdate::cmdVelCallback, this, std::placeholders::_1));
 
             tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
         }
