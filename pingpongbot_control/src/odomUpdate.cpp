@@ -52,7 +52,7 @@ class OdometryUpdate: public rclcpp::Node {
         }
 
         ~OdometryUpdate() {
-            RCLCPP_INFO(this->get_logger(), "Shutting down PingPongBotDriver...");
+            RCLCPP_INFO(this->get_logger(), "Shutting down OdomUpdate...");
             pingpongbot_msgs::msg::WheelSpeeds zero = pingpongbot_msgs::msg::WheelSpeeds();
             zero.u1 = 0;
             zero.u2 = 0;

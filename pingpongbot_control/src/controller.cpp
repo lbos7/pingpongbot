@@ -64,7 +64,7 @@ class Controller : public rclcpp::Node {
         }
 
         ~Controller() {
-            RCLCPP_INFO(this->get_logger(), "Shutting down PingPongBotDriver...");
+            RCLCPP_INFO(this->get_logger(), "Shutting down Controller...");
             geometry_msgs::msg::Twist zero;
             cmd_vel_pub_->publish(zero);
             current_state.data = true;
@@ -132,7 +132,7 @@ class Controller : public rclcpp::Node {
                     commandedTwist.angular.z = wz;
 
                     RCLCPP_INFO(
-                        rclcpp::get_logger(),
+                        rclcpp::get_logger("twist_logger"),
                         "Twist Message - Linear: [x: %.2f, y: %.2f, z: %.2f], Angular: [x: %.2f, y: %.2f, z: %.2f]",
                         commandedTwist.linear.x, commandedTwist.linear.y, commandedTwist.linear.z,
                         commandedTwist.angular.x, commandedTwist.angular.y, commandedTwist.angular.z
@@ -158,7 +158,7 @@ class Controller : public rclcpp::Node {
         void goalPoseCallback(const geometry_msgs::msg::PoseStamped & msg) {
             currentGoal = msg;
             RCLCPP_INFO(
-                rclcpp::get_logger(),
+                rclcpp::get_logger("goal_pose_logger"),
                 "PoseStamped Message:\n"
                 "Header - frame_id: %s, timestamp: %u.%u\n"
                 "Position - x: %.2f, y: %.2f, z: %.2f\n"

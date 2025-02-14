@@ -55,6 +55,7 @@ class PingPongBotDriver : public rclcpp::Node {
                 zero.u2 = 0;
                 zero.u3 = 0;
                 driver->setSpeeds(zero);
+                driver->resetEncoderPulses();
             }   
         }
 
