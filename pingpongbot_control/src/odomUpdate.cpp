@@ -3,6 +3,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "tf2/LinearMath/Transform.h"
+#include "tf2/LinearMath/Transform.h"
 #include "tf2_ros/transform_broadcaster.h"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 #include "tf2/utils.h"
@@ -55,7 +56,7 @@ class OdometryUpdate: public rclcpp::Node {
             auto current_time = this->get_clock()->now();
             if (!first_joints_cb) {
                 auto relative_trans = omni_drive.odomUpdate(msg);
-                auto new_trans = prev_trans * relative_trans;
+                auto new_trans = relative_trans * prev_trans;
 
                 auto dt = (current_time - prev_time).seconds();
                 odom_msg.header.stamp = current_time;
@@ -88,9 +89,12 @@ class OdometryUpdate: public rclcpp::Node {
                 odom_trans.transform.translation.y = new_trans.getOrigin().y();
                 odom_trans.transform.rotation = tf2::toMsg(new_trans.getRotation().normalized());
 
+                tf_broadcaster_->sendTransform(odom_trans);
+
                 prev_trans = new_trans;
             } else {
                 first_joints_cb = false;
+
             }
             prev_time = current_time;
         }
@@ -105,7 +109,7 @@ class OdometryUpdate: public rclcpp::Node {
         std::string base_id;
         bool first_joints_cb = true;
         pingpongbot_control::OmniDrive omni_drive;
-        tf2::Transform prev_trans = tf2::Transform();
+        tf2::Transform prev_trans;
         sensor_msgs::msg::JointState currentJointState;
         nav_msgs::msg::Odometry odom_msg;
         geometry_msgs::msg::TransformStamped odom_trans;

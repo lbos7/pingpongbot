@@ -1,7 +1,7 @@
 <launch>
     
     <group>
-        <include file="$(find-pkg-share pingpongbot_description)/view_robot.launch.xml" >
+        <include file="$(find-pkg-share pingpongbot_description)/launch/view_robot.launch.xml" >
             <arg name="use_jsp" value="none"/>
         </include>
     </group>
@@ -17,13 +17,13 @@
         <remap from="wheel_angles" to="wheel_angles"/>
         <remap from="joint_states" to="joint_states"/>
         <remap from="cmd_vel" to="cmd_vel"/>
-        <param from="$(find-pkg-share pingpongbot_control)/robot_dimensions.yaml"/>
+        <param from="$(find-pkg-share pingpongbot_control)/config/robot_dimensions.yaml"/>
     </node>
 
     <node pkg="pingpongbot_control" exec="controller">
         <remap from="cmd_vel" to="cmd_vel"/>
         <remap from="goal_pose" to="goal_pose"/>
-        <param from="$(find-pkg-share pingpongbot_control)/controller.yaml"/>
+        <param from="$(find-pkg-share pingpongbot_control)/config/controller.yaml"/>
     </node>
 
 </launch>

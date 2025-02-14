@@ -4,6 +4,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
+#include "geometry_msgs/msg/transform_stamped.hpp"
 #include "geometry_msgs/msg/twist.hpp"
 #include "tf2/LinearMath/Quaternion.h"
 #include "tf2/exceptions.h"
@@ -13,6 +14,7 @@
 #include "tf2/transform_datatypes.h"
 #include "tf2_ros/transform_listener.h"
 #include "tf2_ros/buffer.h"
+#include "tf2_ros/static_transform_broadcaster.h"
 
 class Controller : public rclcpp::Node {
     public:
@@ -55,7 +57,7 @@ class Controller : public rclcpp::Node {
             
             tf_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
             tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
-
+            
         }
     
     private:
@@ -66,10 +68,11 @@ class Controller : public rclcpp::Node {
                 try {
                     t = tf_buffer_->lookupTransform(odom_id, base_id,tf2::TimePointZero);
                 } catch (const tf2::TransformException & ex) {
-                RCLCPP_INFO(
-                    this->get_logger(), "Could not transform %s to %s: %s",
-                    odom_id.c_str(), base_id.c_str(), ex.what());
-                return;
+                    RCLCPP_WARN(  // Use WARN instead of INFO for errors
+                        this->get_logger(), 
+                        "Could not transform %s to %s: %s",
+                        odom_id.c_str(), base_id.c_str(), ex.what());
+                    return;
                 }
 
                 auto dt = (current_time - prev_time).seconds();

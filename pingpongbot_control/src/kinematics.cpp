@@ -25,8 +25,8 @@ namespace pingpongbot_control {
 
         pingpongbot_msgs::msg::WheelAngles newWheelPositions;
         newWheelPositions.theta1 = newState.position[0];
-        newWheelPositions.theta1 = newState.position[1];
-        newWheelPositions.theta1 = newState.position[2];
+        newWheelPositions.theta2 = newState.position[1];
+        newWheelPositions.theta3 = newState.position[2];
 
         double dtheta1 = newWheelPositions.theta1 - this->wheelPositions.theta1;
         double dtheta2 = newWheelPositions.theta2 - this->wheelPositions.theta2;
