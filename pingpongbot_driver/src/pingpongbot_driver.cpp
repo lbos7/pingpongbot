@@ -42,10 +42,11 @@ class PingPongBotDriver : public rclcpp::Node {
         void timerCallback() {
             auto msg = driver->getWheelAngles();
             wheel_angles_pub_->publish(msg);
+            driver->setSpeeds(speeds);
         }
 
         void wheelSpeedsCallback(const pingpongbot_msgs::msg::WheelSpeeds & msg) {
-            driver->setSpeeds(msg);
+            speeds = msg;
         }
 
         void shutdownCallback(const std_msgs::msg::Bool & msg) {
@@ -61,6 +62,7 @@ class PingPongBotDriver : public rclcpp::Node {
 
         // pingpongbot_driver::Driver driver;
         std::shared_ptr<pingpongbot_driver::Driver> driver;
+        pingpongbot_msgs::msg::WheelSpeeds speeds;
         rclcpp::TimerBase::SharedPtr timer_;
         rclcpp::Publisher<pingpongbot_msgs::msg::WheelAngles>::SharedPtr wheel_angles_pub_;
         rclcpp::Subscription<pingpongbot_msgs::msg::WheelSpeeds>::SharedPtr wheel_speeds_sub_;
