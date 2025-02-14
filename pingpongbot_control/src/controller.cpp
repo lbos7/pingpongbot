@@ -6,7 +6,7 @@
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include "geometry_msgs/msg/twist.hpp"
-#include "std_msgs/msg/empty.hpp"
+#include "std_msgs/msg/bool.hpp"
 #include "tf2/LinearMath/Quaternion.h"
 #include "tf2/exceptions.h"
 #include "tf2/utils.h"
@@ -53,7 +53,7 @@ class Controller : public rclcpp::Node {
 
             cmd_vel_pub_ = this->create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 10);
 
-            shutdown_pub_ = this->create_publisher<std_msgs::msg::Empty>("shutdown", 10);
+            shutdown_pub_ = this->create_publisher<std_msgs::msg::Bool>("shutdown", 10);
 
             goal_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
                 "goal_pose", 10, std::bind(&Controller::goalPoseCallback, this, std::placeholders::_1));
@@ -65,8 +65,10 @@ class Controller : public rclcpp::Node {
 
         ~Controller() {
             RCLCPP_INFO(this->get_logger(), "Shutting down PingPongBotDriver...");
-            geometry_msgs::msg::Twist zero = geometry_msgs::msg::Twist();
+            geometry_msgs::msg::Twist zero;
             cmd_vel_pub_->publish(zero);
+            current_state.data = true;
+            shutdown_pub_->publish(current_state);
         }
     
     private:
@@ -129,6 +131,13 @@ class Controller : public rclcpp::Node {
                     commandedTwist.linear.y = vy;
                     commandedTwist.angular.z = wz;
 
+                    RCLCPP_INFO(
+                        rclcpp::get_logger(),
+                        "Twist Message - Linear: [x: %.2f, y: %.2f, z: %.2f], Angular: [x: %.2f, y: %.2f, z: %.2f]",
+                        commandedTwist.linear.x, commandedTwist.linear.y, commandedTwist.linear.z,
+                        commandedTwist.angular.x, commandedTwist.angular.y, commandedTwist.angular.z
+                    );
+
                     cmd_vel_pub_->publish(commandedTwist);
                     
                     prev_error_linx = error_linx;
@@ -138,6 +147,8 @@ class Controller : public rclcpp::Node {
 
             } else {
                 first_cb = false;
+                current_state.data = false;
+                shutdown_pub_->publish(current_state);
             }
 
             prev_time = current_time;
@@ -146,6 +157,18 @@ class Controller : public rclcpp::Node {
 
         void goalPoseCallback(const geometry_msgs::msg::PoseStamped & msg) {
             currentGoal = msg;
+            RCLCPP_INFO(
+                rclcpp::get_logger(),
+                "PoseStamped Message:\n"
+                "Header - frame_id: %s, timestamp: %u.%u\n"
+                "Position - x: %.2f, y: %.2f, z: %.2f\n"
+                "Orientation - x: %.2f, y: %.2f, z: %.2f, w: %.2f",
+                currentGoal.header.frame_id.c_str(),
+                currentGoal.header.stamp.sec, currentGoal.header.stamp.nanosec,
+                currentGoal.pose.position.x, currentGoal.pose.position.y, currentGoal.pose.position.z,
+                currentGoal.pose.orientation.x, currentGoal.pose.orientation.y,
+                currentGoal.pose.orientation.z, currentGoal.pose.orientation.w
+            );
         }
 
         double Kp_x, Ki_x, Kd_x;
@@ -163,9 +186,10 @@ class Controller : public rclcpp::Node {
         rclcpp::Time prev_time;
         bool first_cb = true;
         geometry_msgs::msg::Twist commandedTwist;
+        std_msgs::msg::Bool current_state;
         rclcpp::TimerBase::SharedPtr timer_;
         rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_pub_;
-        rclcpp::Publisher<std_msgs::msg::Empty>::SharedPtr shutdown_pub_;
+        rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr shutdown_pub_;
         rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr goal_pose_sub_;
         std::shared_ptr<tf2_ros::TransformListener> tf_listener_{nullptr};
         std::unique_ptr<tf2_ros::Buffer> tf_buffer_;

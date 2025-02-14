@@ -1,6 +1,7 @@
 #include <chrono>
 
 #include "rclcpp/rclcpp.hpp"
+#include "std_msgs/msg/bool.hpp"
 #include "pingpongbot_driver/driver.hpp"
 #include "pingpongbot_msgs/msg/wheel_speeds.hpp"
 #include "pingpongbot_msgs/msg/wheel_angles.hpp"
@@ -26,6 +27,9 @@ class PingPongBotDriver : public rclcpp::Node {
 
             wheel_speeds_sub_ = this->create_subscription<pingpongbot_msgs::msg::WheelSpeeds>(
                 "wheel_speeds", 10, std::bind(&PingPongBotDriver::wheelSpeedsCallback, this, std::placeholders::_1));
+
+            shutdown_sub_ = this->create_subscription<std_msgs::msg::Bool>(
+                "goal_pose", 10, std::bind(&PingPongBotDriver::shutdownCallback, this, std::placeholders::_1));
         }
 
         ~PingPongBotDriver() {
@@ -44,11 +48,22 @@ class PingPongBotDriver : public rclcpp::Node {
             driver->setSpeeds(msg);
         }
 
+        void shutdownCallback(const std_msgs::msg::Bool & msg) {
+            if (msg.data) {
+                pingpongbot_msgs::msg::WheelSpeeds zero;
+                zero.u1 = 0;
+                zero.u2 = 0;
+                zero.u3 = 0;
+                driver->setSpeeds(zero);
+            }   
+        }
+
         // pingpongbot_driver::Driver driver;
         std::shared_ptr<pingpongbot_driver::Driver> driver;
         rclcpp::TimerBase::SharedPtr timer_;
         rclcpp::Publisher<pingpongbot_msgs::msg::WheelAngles>::SharedPtr wheel_angles_pub_;
         rclcpp::Subscription<pingpongbot_msgs::msg::WheelSpeeds>::SharedPtr wheel_speeds_sub_;
+        rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr shutdown_sub_;
 };
 
 int main(int argc, char * argv[]) {

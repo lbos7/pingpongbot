@@ -3,6 +3,7 @@
     <node pkg="pingpongbot_driver" exec="pingpongbot_driver">
         <remap from="wheel_speeds" to="wheel_speeds"/>
         <remap from="wheel_angles" to="wheel_angles"/>
+        <remap from="shutdown" to="shutdown"/>
     </node>
 
 </launch>

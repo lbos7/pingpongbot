@@ -8,10 +8,11 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(std_msgs REQUIRED)
 find_package(pingpongbot_msgs REQUIRED)
 
 add_executable(pingpongbot_driver src/pingpongbot_driver.cpp src/driver.cpp)
-ament_target_dependencies(pingpongbot_driver rclcpp pingpongbot_msgs)
+ament_target_dependencies(pingpongbot_driver rclcpp pingpongbot_msgs std_msgs)
 
 target_include_directories(pingpongbot_driver
   PUBLIC
