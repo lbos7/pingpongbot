@@ -11,18 +11,27 @@ find_package(rclcpp REQUIRED)
 find_package(pingpongbot_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 
 add_executable(odomUpdate src/odomUpdate.cpp src/kinematics.cpp)
-ament_target_dependencies(odomUpdate rclcpp pingpongbot_msgs tf2 tf2_ros sensor_msgs nav_msgs pingpongbot_msgs geometry_msgs)
+ament_target_dependencies(odomUpdate rclcpp pingpongbot_msgs tf2 tf2_ros tf2_geometry_msgs sensor_msgs nav_msgs pingpongbot_msgs geometry_msgs)
+
+target_include_directories(odomUpdate
+  PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>  # during build
+  $<INSTALL_INTERFACE:include>  # during install
+)
 
 add_executable(jointStateUpdate src/jointStateUpdate.cpp)
 ament_target_dependencies(jointStateUpdate rclcpp sensor_msgs pingpongbot_msgs)
 
 add_executable(controller src/controller.cpp)
-ament_target_dependencies(controller rclcpp geometry_msgs tf2 tf2_ros)
+ament_target_dependencies(controller rclcpp geometry_msgs tf2 tf2_ros tf2_geometry_msgs)
+
+
 
 install(TARGETS
   odomUpdate
@@ -44,6 +53,12 @@ install(DIRECTORY
 install(DIRECTORY 
   include/
   DESTINATION include/${PROJECT_NAME}
+)
+
+include_directories(
+  ${tf2_INCLUDE_DIRS}
+  ${tf2_ros_INCLUDE_DIRS}
+  ${tf2_geometry_msgs_INCLUDE_DIRS}
 )
 
 

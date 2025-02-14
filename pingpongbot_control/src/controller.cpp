@@ -5,7 +5,12 @@
 #include "rclcpp/rclcpp.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "geometry_msgs/msg/twist.hpp"
+#include "tf2/LinearMath/Quaternion.h"
 #include "tf2/exceptions.h"
+#include "tf2/utils.h"
+#include "tf2/convert.h"
+#include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
+#include "tf2/transform_datatypes.h"
 #include "tf2_ros/transform_listener.h"
 #include "tf2_ros/buffer.h"
 
@@ -43,7 +48,7 @@ class Controller : public rclcpp::Node {
             timer_ = this->create_wall_timer(
                 std::chrono::milliseconds(10), std::bind(&Controller::timerCallback, this));
 
-            cmd_vel_pub_ = this->create_publisher("cmd_vel", 10);
+            cmd_vel_pub_ = this->create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 10);
 
             goal_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
                 "goal_pose", 10, std::bind(&Controller::goalPoseCallback, this, std::placeholders::_1));
@@ -73,13 +78,17 @@ class Controller : public rclcpp::Node {
                 double goal_y = currentGoal.pose.position.y;
 
                 double goal_yaw, goal_pitch, goal_roll;
-                tf2::getEulerYPR(currentGoal.pose.orientation, goal_yaw, goal_pitch, goal_roll);
+                tf2::Quaternion currentGoal_quat;
+                tf2::fromMsg(currentGoal.pose.orientation, currentGoal_quat);
+                tf2::getEulerYPR(currentGoal_quat, goal_yaw, goal_pitch, goal_roll);
 
                 double current_x = t.transform.translation.x;
                 double current_y = t.transform.translation.y;
 
                 double current_yaw, current_pitch, current_roll;
-                tf2::getEulerYPR(t.transform.rotation, current_yaw, current_pitch, current_roll);
+                tf2::Quaternion t_quat;
+                tf2::fromMsg(t.transform.rotation, t_quat);
+                tf2::getEulerYPR(t_quat, current_yaw, current_pitch, current_roll);
                 
                 error_linx = goal_x - current_x;
                 error_liny = goal_y - current_y;
@@ -87,7 +96,7 @@ class Controller : public rclcpp::Node {
 
                 distance_error = std::sqrt(std::pow(error_linx, 2) + std::pow(error_liny, 2));
 
-                if ((distance_error < thresh_lin) && (std::abs(error_ang) < thesh_ang)) {
+                if ((distance_error < thresh_lin) && (std::abs(error_ang) < thresh_ang)) {
 
                     commandedTwist.linear.x = 0;
                     commandedTwist.linear.y = 0;
@@ -124,7 +133,7 @@ class Controller : public rclcpp::Node {
         }
 
         void goalPoseCallback(const geometry_msgs::msg::PoseStamped & msg) {
-            currentGoal = currentGoal;
+            currentGoal = msg;
         }
 
         double Kp_x, Ki_x, Kd_x;

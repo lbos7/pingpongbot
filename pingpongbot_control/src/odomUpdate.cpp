@@ -5,6 +5,9 @@
 #include "tf2/LinearMath/Transform.h"
 #include "tf2_ros/transform_broadcaster.h"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
+#include "tf2/utils.h"
+#include "tf2/transform_datatypes.h"
+#include "tf2/convert.h"
 #include "sensor_msgs/msg/joint_state.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "geometry_msgs/msg/twist.hpp"
@@ -32,12 +35,9 @@ class OdometryUpdate: public rclcpp::Node {
             odom_trans.header.frame_id = odom_id;
             odom_trans.child_frame_id = base_id;
 
-            timer_ = this->create_wall_timer(
-                std::chrono::milliseconds(10), std::bind(&OdometryUpdate::timerCallback, this));
-
             odom_pub_ = this->create_publisher<nav_msgs::msg::Odometry>("odom", 10);
 
-            wheel_speeds_pub_ = this->create_subscription<pingpongbot_msgs::msg::WheelSpeeds>("wheel_speeds", 10);
+            wheel_speeds_pub_ = this->create_publisher<pingpongbot_msgs::msg::WheelSpeeds>("wheel_speeds", 10);
 
             wheel_angles_pub_ = this->create_publisher<pingpongbot_msgs::msg::WheelAngles>("wheel_angles", 10);
 
@@ -62,7 +62,10 @@ class OdometryUpdate: public rclcpp::Node {
                 odom_msg.pose.pose.position.x = new_trans.getOrigin().x();
                 odom_msg.pose.pose.position.y = new_trans.getOrigin().y();
 
-                odom_msg.pose.pose.orientation = tf2::toMsg(new_trans.getRotation().normalized());
+                odom_msg.pose.pose.orientation.x = new_trans.getRotation().normalized().getX();
+                odom_msg.pose.pose.orientation.y = new_trans.getRotation().normalized().getY();
+                odom_msg.pose.pose.orientation.z = new_trans.getRotation().normalized().getZ();
+                odom_msg.pose.pose.orientation.w = new_trans.getRotation().normalized().getW();
                 
                 odom_msg.twist.twist.linear.x =
                     (new_trans.getOrigin().x() - prev_trans.getOrigin().x()) / dt;
@@ -81,9 +84,9 @@ class OdometryUpdate: public rclcpp::Node {
                 odom_msg.twist.twist.angular.z = (new_yaw - prev_yaw) / dt;
 
                 odom_trans.header.stamp = current_time;
-                odom_trans.transform.translation.x = new_transform.getOrigin().x();
-                odom_trans.transform.translation.y = new_transform.getOrigin().y();
-                odom_trans.transform.rotation = tf2::toMsg(new_transform.getRotation().normalized());
+                odom_trans.transform.translation.x = new_trans.getOrigin().x();
+                odom_trans.transform.translation.y = new_trans.getOrigin().y();
+                odom_trans.transform.rotation = tf2::toMsg(new_trans.getRotation().normalized());
 
                 prev_trans = new_trans;
             } else {
