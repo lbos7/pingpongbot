@@ -49,6 +49,7 @@ namespace pingpongbot_driver {
             ~Driver();
             void setSpeeds(pingpongbot_msgs::msg::WheelSpeeds speeds);
             void resetEncoderPulses();
+            void zeroSpeeds();
             pingpongbot_msgs::msg::WheelAngles getWheelAngles();
 
     };

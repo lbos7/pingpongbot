@@ -7,6 +7,7 @@ namespace pingpongbot_driver {
     }
 
     Driver::~Driver() {
+        zeroSpeeds();
         close(this->file);
     }
 
@@ -89,6 +90,21 @@ namespace pingpongbot_driver {
                 countsReset[i] = counts[i] == 0;
             }
             done = countsReset[0] && countsReset[1] && countsReset[2];
+        }
+    }
+
+    void Driver::zeroSpeeds() {
+        bool done = false;
+        bool speedsSet[3] = {false, false, false};
+        int8_t speedInts[4] = {0, 0, 0, 0};
+        std::array<int8_t, 3> speedsCheck;
+        while (!done) {
+            i2cWrite(this->file, this->motorFixedPWMAddr, (uint8_t*)speedInts, 4);
+            speedsCheck = this->getSpeeds();
+            for (int i = 0; i < 3; i++) {
+                speedsSet[i] = speedInts[i] == speedsCheck[i];
+            }
+            done = speedsSet[0] && speedsSet[1] && speedsSet[2];
         }
     }
 
