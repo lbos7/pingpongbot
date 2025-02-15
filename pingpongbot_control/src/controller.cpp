@@ -6,7 +6,7 @@
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include "geometry_msgs/msg/twist.hpp"
-#include "std_msgs/msg/bool.hpp"
+#include "std_msgs/msg/empty.hpp"
 #include "tf2/LinearMath/Quaternion.h"
 #include "tf2/exceptions.h"
 #include "tf2/utils.h"
@@ -53,7 +53,7 @@ class Controller : public rclcpp::Node {
 
             cmd_vel_pub_ = this->create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 10);
 
-            shutdown_pub_ = this->create_publisher<std_msgs::msg::Bool>("shutdown", 10);
+            heartbeat_pub_ = this->create_publisher<std_msgs::msg::Empty>("heartbeat", 10);
 
             goal_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
                 "goal_pose", 10, std::bind(&Controller::goalPoseCallback, this, std::placeholders::_1));
@@ -67,8 +67,6 @@ class Controller : public rclcpp::Node {
             RCLCPP_INFO(this->get_logger(), "Shutting down Controller...");
             geometry_msgs::msg::Twist zero;
             cmd_vel_pub_->publish(zero);
-            current_state.data = true;
-            shutdown_pub_->publish(current_state);
         }
     
     private:
@@ -150,9 +148,9 @@ class Controller : public rclcpp::Node {
                 current_state.data = false;
                 shutdown_pub_->publish(current_state);
             }
-
             prev_time = current_time;
-
+            std_msgs::msg::Empty empty;
+            heartbeat_pub_->publish(empty);
         }
 
         void goalPoseCallback(const geometry_msgs::msg::PoseStamped & msg) {
@@ -186,10 +184,9 @@ class Controller : public rclcpp::Node {
         rclcpp::Time prev_time;
         bool first_cb = true;
         geometry_msgs::msg::Twist commandedTwist;
-        std_msgs::msg::Bool current_state;
         rclcpp::TimerBase::SharedPtr timer_;
         rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_pub_;
-        rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr shutdown_pub_;
+        rclcpp::Publisher<std_msgs::msg::Empty>::SharedPtr heartbeat_pub_;
         rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr goal_pose_sub_;
         std::shared_ptr<tf2_ros::TransformListener> tf_listener_{nullptr};
         std::unique_ptr<tf2_ros::Buffer> tf_buffer_;

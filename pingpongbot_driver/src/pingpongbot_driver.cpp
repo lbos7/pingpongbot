@@ -1,7 +1,7 @@
 #include <chrono>
 
 #include "rclcpp/rclcpp.hpp"
-#include "std_msgs/msg/bool.hpp"
+#include "std_msgs/msg/empty.hpp"
 #include "pingpongbot_driver/driver.hpp"
 #include "pingpongbot_msgs/msg/wheel_speeds.hpp"
 #include "pingpongbot_msgs/msg/wheel_angles.hpp"
@@ -28,8 +28,8 @@ class PingPongBotDriver : public rclcpp::Node {
             wheel_speeds_sub_ = this->create_subscription<pingpongbot_msgs::msg::WheelSpeeds>(
                 "wheel_speeds", 10, std::bind(&PingPongBotDriver::wheelSpeedsCallback, this, std::placeholders::_1));
 
-            shutdown_sub_ = this->create_subscription<std_msgs::msg::Bool>(
-                "shutdown", 10, std::bind(&PingPongBotDriver::shutdownCallback, this, std::placeholders::_1));
+            heartbeat_sub_ = this->create_subscription<std_msgs::msg::Empty>(
+                "heartbeat", 10, std::bind(&PingPongBotDriver::heartbeatCallback, this, std::placeholders::_1));
         }
 
         ~PingPongBotDriver() {
@@ -43,30 +43,34 @@ class PingPongBotDriver : public rclcpp::Node {
             auto msg = driver->getWheelAngles();
             wheel_angles_pub_->publish(msg);
             driver->setSpeeds(speeds);
+            auto current_time = this->get_clock()->now();
+            if ((current_time - last_heartbeat_time_).seconds() > 0.5) {
+                RCLCPP_WARN(this->get_logger(), "Lost connection! Stopping wheels.");
+                pingpongbot_msgs::msg::WheelSpeeds zero;
+                zero.u1 = 0;
+                zero.u2 = 0;
+                zero.u3 = 0;
+                driver->setSpeeds(zero);
+            }
         }
 
         void wheelSpeedsCallback(const pingpongbot_msgs::msg::WheelSpeeds & msg) {
             speeds = msg;
         }
 
-        void shutdownCallback(const std_msgs::msg::Bool & msg) {
-            if (msg.data) {
-                pingpongbot_msgs::msg::WheelSpeeds zero;
-                zero.u1 = 0;
-                zero.u2 = 0;
-                zero.u3 = 0;
-                driver->setSpeeds(zero);
-                driver->resetEncoderPulses();
-            }   
+        void heartbeatCallback(const std_msgs::msg::Empty & msg) {
+            (void) msg;
+            last_heartbeat_time_ = this->get_clock()->now();
         }
 
         // pingpongbot_driver::Driver driver;
         std::shared_ptr<pingpongbot_driver::Driver> driver;
         pingpongbot_msgs::msg::WheelSpeeds speeds;
+        rclcpp::Time last_heartbeat_time_;
         rclcpp::TimerBase::SharedPtr timer_;
         rclcpp::Publisher<pingpongbot_msgs::msg::WheelAngles>::SharedPtr wheel_angles_pub_;
         rclcpp::Subscription<pingpongbot_msgs::msg::WheelSpeeds>::SharedPtr wheel_speeds_sub_;
-        rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr shutdown_sub_;
+        rclcpp::Subscription<std_msgs::msg::Empty>::SharedPtr heartbeat_sub_;
 };
 
 int main(int argc, char * argv[]) {
