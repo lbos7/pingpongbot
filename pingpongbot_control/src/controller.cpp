@@ -120,7 +120,7 @@ class Controller : public rclcpp::Node {
 
                 } else {
                     accum_error_linx += error_linx * dt;
-                    accum_error_liny += error_linx * dt;
+                    accum_error_liny += error_liny * dt;
                     accum_error_ang += error_ang * dt;
 
                     auto vx = (Kp_x * error_linx) + (Ki_x * accum_error_linx) + (Kd_x * ((error_linx - prev_error_linx)/dt));

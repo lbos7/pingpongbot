@@ -29,7 +29,7 @@ class PingPongBotDriver : public rclcpp::Node {
                 "wheel_speeds", 10, std::bind(&PingPongBotDriver::wheelSpeedsCallback, this, std::placeholders::_1));
 
             shutdown_sub_ = this->create_subscription<std_msgs::msg::Bool>(
-                "goal_pose", 10, std::bind(&PingPongBotDriver::shutdownCallback, this, std::placeholders::_1));
+                "shutdown", 10, std::bind(&PingPongBotDriver::shutdownCallback, this, std::placeholders::_1));
         }
 
         ~PingPongBotDriver() {
