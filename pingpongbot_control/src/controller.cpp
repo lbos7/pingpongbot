@@ -2,6 +2,7 @@
 #include <string>
 #include <cmath>
 #include <vector>
+#include <algorithm>
 
 #include "rclcpp/rclcpp.hpp"
 #include "rcl_interfaces/msg/set_parameters_result.hpp"
@@ -9,6 +10,7 @@
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include "geometry_msgs/msg/twist.hpp"
 #include "std_msgs/msg/empty.hpp"
+#include "std_msgs/msg/bool.hpp"
 #include "tf2/LinearMath/Quaternion.h"
 #include "tf2/exceptions.h"
 #include "tf2/utils.h"
@@ -36,6 +38,7 @@ class Controller : public rclcpp::Node {
             this->declare_parameter("base_id", "base_footprint");
             this->declare_parameter("thresh_lin", 0.055);
             this->declare_parameter("thresh_ang", 0.0349066);
+            this->declare_parameter("min_speed", .75);
 
             Kp_x = this->get_parameter("Kp_x").as_double();
             Ki_x = this->get_parameter("Ki_x").as_double();
@@ -50,6 +53,7 @@ class Controller : public rclcpp::Node {
             base_id = this->get_parameter("base_id").as_string();
             thresh_lin = this->get_parameter("thresh_lin").as_double();
             thresh_ang = this->get_parameter("thresh_ang").as_double();
+            min_speed = this->get_parameter("min_speed").as_double();
 
             timer_ = this->create_wall_timer(
                 std::chrono::milliseconds(10), std::bind(&Controller::timerCallback, this));
@@ -59,6 +63,8 @@ class Controller : public rclcpp::Node {
             heartbeat_pub_ = this->create_publisher<std_msgs::msg::Empty>("heartbeat", 10);
 
             error_pub_ = this->create_publisher<pingpongbot_msgs::msg::Error>("error", 10);
+
+            reached_goal_pub_ = this->create_publisher<std_msgs::msg::Bool>("reached_goal", 10);
 
             goal_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
                 "goal_pose", 10, std::bind(&Controller::goalPoseCallback, this, std::placeholders::_1));
@@ -117,15 +123,15 @@ class Controller : public rclcpp::Node {
 
                 distance_error = std::sqrt(std::pow(error_linx, 2) + std::pow(error_liny, 2));
 
-                if ((distance_error < thresh_lin) && (std::abs(error_ang) < thresh_ang)) {
+                if (!reached_goal && (distance_error < thresh_lin) && (std::abs(error_ang) < thresh_ang)) {
 
                     commandedTwist.linear.x = 0;
                     commandedTwist.linear.y = 0;
                     commandedTwist.angular.z = 0;
+                    reached_goal = true;
 
-                    cmd_vel_pub_->publish(commandedTwist);
+                } else if (!reached_goal) {
 
-                } else {
                     accum_error_linx += error_linx * dt;
                     accum_error_liny += error_liny * dt;
                     accum_error_ang += error_ang * dt;
@@ -134,18 +140,21 @@ class Controller : public rclcpp::Node {
                     auto vy = (Kp_y * error_liny) + (Ki_y * accum_error_liny) + (Kd_y * ((error_liny - prev_error_liny)/dt));
                     auto wz = (Kp_ang * error_ang) + (Ki_ang * accum_error_ang) + (Kd_ang * ((error_ang - prev_error_ang)/dt));
 
+                    // if (vx < 0) {
+                    //     vx = std::min(vx, -1 * min_speed);
+                    // } else {
+                    //     vx = std::max(vx, min_speed);
+                    // }
+
+                    // if (vy < 0) {
+                    //     vy = std::min(vx, -1 * min_speed);
+                    // } else {
+                    //     vy = std::max(vx, min_speed);
+                    // }
+
                     commandedTwist.linear.x = vx;
                     commandedTwist.linear.y = vy;
                     commandedTwist.angular.z = wz;
-
-                    // RCLCPP_INFO(
-                    //     rclcpp::get_logger("twist_logger"),
-                    //     "Twist Message - Linear: [x: %.2f, y: %.2f, z: %.2f], Angular: [x: %.2f, y: %.2f, z: %.2f]",
-                    //     commandedTwist.linear.x, commandedTwist.linear.y, commandedTwist.linear.z,
-                    //     commandedTwist.angular.x, commandedTwist.angular.y, commandedTwist.angular.z
-                    // );
-
-                    cmd_vel_pub_->publish(commandedTwist);
                     
                     if (count >= 100) {
                         error_msg.x_error = error_linx;
@@ -158,13 +167,19 @@ class Controller : public rclcpp::Node {
                     prev_error_linx = error_linx;
                     prev_error_liny = error_liny;
                     prev_error_ang = error_ang;
+
+                } else if (reached_goal && (distance_error > thresh_lin) && (std::abs(error_ang) > thresh_ang)){
+                    reached_goal = false;
                 }
 
             } else {
                 first_cb = false;
             }
             prev_time = current_time;
+            cmd_vel_pub_->publish(commandedTwist);
             heartbeat_pub_->publish(empty);
+            reached_goal_msg.data = reached_goal;
+            reached_goal_pub_->publish(reached_goal_msg);
             count++;
         }
 
@@ -234,21 +249,25 @@ class Controller : public rclcpp::Node {
         double error_liny, prev_error_liny = 0, accum_error_liny = 0;
         double distance_error;
         double error_ang, prev_error_ang = 0, accum_error_ang = 0;
+        double min_speed;
         pingpongbot_msgs::msg::Error error_msg;
         std::string odom_id;
         std::string base_id;
         double thresh_lin, thresh_ang;
-        geometry_msgs::msg::PoseStamped currentGoal = geometry_msgs::msg::PoseStamped();
+        geometry_msgs::msg::PoseStamped currentGoal;
         geometry_msgs::msg::TransformStamped t;
         rclcpp::Time prev_time;
         bool first_cb = true;
         geometry_msgs::msg::Twist commandedTwist;
         std_msgs::msg::Empty empty;
         int count = 0;
+        bool reached_goal = false;
+        std_msgs::msg::Bool reached_goal_msg;
         rclcpp::TimerBase::SharedPtr timer_;
         rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_pub_;
         rclcpp::Publisher<std_msgs::msg::Empty>::SharedPtr heartbeat_pub_;
         rclcpp::Publisher<pingpongbot_msgs::msg::Error>::SharedPtr error_pub_;
+        rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr reached_goal_pub_;
         rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr goal_pose_sub_;
         std::shared_ptr<tf2_ros::TransformListener> tf_listener_{nullptr};
         std::unique_ptr<tf2_ros::Buffer> tf_buffer_;

@@ -17,9 +17,10 @@ find_package(sensor_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(std_srvs REQUIRED)
 
 add_executable(odomUpdate src/odomUpdate.cpp src/kinematics.cpp)
-ament_target_dependencies(odomUpdate rclcpp pingpongbot_msgs tf2 tf2_ros tf2_geometry_msgs sensor_msgs nav_msgs pingpongbot_msgs geometry_msgs)
+ament_target_dependencies(odomUpdate rclcpp rcl_interfaces pingpongbot_msgs tf2 tf2_ros tf2_geometry_msgs sensor_msgs nav_msgs pingpongbot_msgs geometry_msgs std_msgs std_srvs)
 
 target_include_directories(odomUpdate
   PUBLIC
