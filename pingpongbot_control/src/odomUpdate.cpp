@@ -117,11 +117,11 @@ class OdometryUpdate: public rclcpp::Node {
 
         void cmdVelCallback(const geometry_msgs::msg::Twist & msg) {
             auto speeds = omni_drive.twist2WheelSpeeds(msg);
-            RCLCPP_INFO(
-                rclcpp::get_logger("wheel_speeds"),
-                "Speeds:[1: %.2f 2: %.2f, 3: %.2f]",
-                speeds.u1, speeds.u2, speeds.u3
-            );
+            // RCLCPP_INFO(
+            //     rclcpp::get_logger("wheel_speeds"),
+            //     "Speeds:[1: %.2f 2: %.2f, 3: %.2f]",
+            //     speeds.u1, speeds.u2, speeds.u3
+            // );
             wheel_speeds_pub_->publish(speeds);
         }
 

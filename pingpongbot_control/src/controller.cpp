@@ -1,8 +1,10 @@
 #include <chrono>
 #include <string>
 #include <cmath>
+#include <vector>
 
 #include "rclcpp/rclcpp.hpp"
+#include "rcl_interfaces/msg/set_parameters_result.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include "geometry_msgs/msg/twist.hpp"
@@ -16,6 +18,7 @@
 #include "tf2_ros/transform_listener.h"
 #include "tf2_ros/buffer.h"
 #include "tf2_ros/static_transform_broadcaster.h"
+#include "pingpongbot_msgs/msg/error.hpp"
 
 class Controller : public rclcpp::Node {
     public:
@@ -55,11 +58,17 @@ class Controller : public rclcpp::Node {
 
             heartbeat_pub_ = this->create_publisher<std_msgs::msg::Empty>("heartbeat", 10);
 
+            error_pub_ = this->create_publisher<pingpongbot_msgs::msg::Error>("error", 10);
+
             goal_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
                 "goal_pose", 10, std::bind(&Controller::goalPoseCallback, this, std::placeholders::_1));
             
             tf_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
             tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
+
+            param_callback_handle_ = this->add_on_set_parameters_callback(
+                std::bind(&Controller::onParamChange, this, std::placeholders::_1));
+            
 
         }
 
@@ -129,14 +138,22 @@ class Controller : public rclcpp::Node {
                     commandedTwist.linear.y = vy;
                     commandedTwist.angular.z = wz;
 
-                    RCLCPP_INFO(
-                        rclcpp::get_logger("twist_logger"),
-                        "Twist Message - Linear: [x: %.2f, y: %.2f, z: %.2f], Angular: [x: %.2f, y: %.2f, z: %.2f]",
-                        commandedTwist.linear.x, commandedTwist.linear.y, commandedTwist.linear.z,
-                        commandedTwist.angular.x, commandedTwist.angular.y, commandedTwist.angular.z
-                    );
+                    // RCLCPP_INFO(
+                    //     rclcpp::get_logger("twist_logger"),
+                    //     "Twist Message - Linear: [x: %.2f, y: %.2f, z: %.2f], Angular: [x: %.2f, y: %.2f, z: %.2f]",
+                    //     commandedTwist.linear.x, commandedTwist.linear.y, commandedTwist.linear.z,
+                    //     commandedTwist.angular.x, commandedTwist.angular.y, commandedTwist.angular.z
+                    // );
 
                     cmd_vel_pub_->publish(commandedTwist);
+                    
+                    if (count >= 100) {
+                        error_msg.x_error = error_linx;
+                        error_msg.y_error = error_liny;
+                        error_msg.ang_error = error_ang;
+                        error_pub_->publish(error_msg);
+                        count = 0;
+                    }
                     
                     prev_error_linx = error_linx;
                     prev_error_liny = error_liny;
@@ -145,12 +162,10 @@ class Controller : public rclcpp::Node {
 
             } else {
                 first_cb = false;
-                current_state.data = false;
-                shutdown_pub_->publish(current_state);
             }
             prev_time = current_time;
-            std_msgs::msg::Empty empty;
             heartbeat_pub_->publish(empty);
+            count++;
         }
 
         void goalPoseCallback(const geometry_msgs::msg::PoseStamped & msg) {
@@ -169,6 +184,49 @@ class Controller : public rclcpp::Node {
             );
         }
 
+        rcl_interfaces::msg::SetParametersResult onParamChange(
+            const std::vector<rclcpp::Parameter> & params) {
+            for (const auto &param : params) {
+                if (param.get_name() == "Kp_x") {
+                    Kp_x = param.as_double();
+                    RCLCPP_INFO(this->get_logger(), "Updated Kp_x: %.3f", Kp_x);
+                } else if (param.get_name() == "Ki_x") {
+                    Ki_x = param.as_double();
+                    RCLCPP_INFO(this->get_logger(), "Updated Ki_x: %.3f", Ki_x);
+                } else if (param.get_name() == "Kd_x") {
+                    Kd_x = param.as_double();
+                    RCLCPP_INFO(this->get_logger(), "Updated Kd_x: %.3f", Kd_x);
+                } else if (param.get_name() == "Kp_y") {
+                    Kp_y = param.as_double();
+                    RCLCPP_INFO(this->get_logger(), "Updated Kp_y: %.3f", Kp_y);
+                } else if (param.get_name() == "Ki_y") {
+                    Ki_y = param.as_double();
+                    RCLCPP_INFO(this->get_logger(), "Updated Ki_y: %.3f", Ki_y);
+                } else if (param.get_name() == "Ki_x") {
+                    Kd_y = param.as_double();
+                    RCLCPP_INFO(this->get_logger(), "Updated Kd_y: %.3f", Kd_y);
+                } else if (param.get_name() == "Kp_ang") {
+                    Kp_ang = param.as_double();
+                    RCLCPP_INFO(this->get_logger(), "Updated Kp_ang: %.3f", Kp_ang);
+                } else if (param.get_name() == "Ki_ang") {
+                    Ki_ang = param.as_double();
+                    RCLCPP_INFO(this->get_logger(), "Updated Ki_ang: %.3f", Kd_ang);
+                } else if (param.get_name() == "Ki_ang") {
+                    Kd_ang = param.as_double();
+                    RCLCPP_INFO(this->get_logger(), "Updated Kd_ang: %.3f", Kd_ang);
+                } else if (param.get_name() == "thresh_lin") {
+                    thresh_lin = param.as_double();
+                    RCLCPP_INFO(this->get_logger(), "Updated thresh_lin: %.3f", thresh_lin);
+                } else if (param.get_name() == "thresh_ang") {
+                    thresh_ang = param.as_double();
+                    RCLCPP_INFO(this->get_logger(), "Updated thresh_ang: %.3f", thresh_ang);
+                }
+            }
+            rcl_interfaces::msg::SetParametersResult result;
+            result.successful = true;
+            return result;
+        }
+
         double Kp_x, Ki_x, Kd_x;
         double Kp_y, Ki_y, Kd_y;
         double Kp_ang, Ki_ang, Kd_ang;
@@ -176,6 +234,7 @@ class Controller : public rclcpp::Node {
         double error_liny, prev_error_liny = 0, accum_error_liny = 0;
         double distance_error;
         double error_ang, prev_error_ang = 0, accum_error_ang = 0;
+        pingpongbot_msgs::msg::Error error_msg;
         std::string odom_id;
         std::string base_id;
         double thresh_lin, thresh_ang;
@@ -184,12 +243,16 @@ class Controller : public rclcpp::Node {
         rclcpp::Time prev_time;
         bool first_cb = true;
         geometry_msgs::msg::Twist commandedTwist;
+        std_msgs::msg::Empty empty;
+        int count = 0;
         rclcpp::TimerBase::SharedPtr timer_;
         rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_pub_;
         rclcpp::Publisher<std_msgs::msg::Empty>::SharedPtr heartbeat_pub_;
+        rclcpp::Publisher<pingpongbot_msgs::msg::Error>::SharedPtr error_pub_;
         rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr goal_pose_sub_;
         std::shared_ptr<tf2_ros::TransformListener> tf_listener_{nullptr};
         std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
+        rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr param_callback_handle_;
 };
 
 int main(int argc, char ** argv) {

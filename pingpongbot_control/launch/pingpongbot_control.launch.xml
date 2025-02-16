@@ -24,7 +24,12 @@
         <remap from="cmd_vel" to="cmd_vel"/>
         <remap from="goal_pose" to="goal_pose"/>
         <remap from="heartbeat" to="heartbeat"/>
+        <remap from="error" to="error"/>
         <param from="$(find-pkg-share pingpongbot_control)/config/controller.yaml"/>
     </node>
+
+    <!-- <node pkg="rqt_reconfigure" exec="rqt_reconfigure"/> -->
+
+    <node pkg="rqt_plot" exec="rqt_plot"/>
 
 </launch>
