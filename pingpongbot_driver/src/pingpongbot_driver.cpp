@@ -2,6 +2,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/empty.hpp"
+#include "std_srvs/srv/empty.hpp"
 #include "pingpongbot_driver/driver.hpp"
 #include "pingpongbot_msgs/msg/wheel_speeds.hpp"
 #include "pingpongbot_msgs/msg/wheel_angles.hpp"
@@ -30,6 +31,9 @@ class PingPongBotDriver : public rclcpp::Node {
 
             heartbeat_sub_ = this->create_subscription<std_msgs::msg::Empty>(
                 "heartbeat", 10, std::bind(&PingPongBotDriver::heartbeatCallback, this, std::placeholders::_1));
+
+            reset_encoder_srv_ = this->create_service<std_srvs::srv::Empty>(
+                "reset_encoder", std::bind(&PingPongBotDriver::resetEncoder, this, std::placeholders::_1, std::placeholders::_2));
         }
 
         ~PingPongBotDriver() {
@@ -46,11 +50,7 @@ class PingPongBotDriver : public rclcpp::Node {
             auto current_time = this->clock_.now();
             if ((current_time - last_heartbeat_time).seconds() > 0.1) {
                 RCLCPP_WARN(this->get_logger(), "Lost connection! Stopping wheels.");
-                pingpongbot_msgs::msg::WheelSpeeds zero;
-                zero.u1 = 0;
-                zero.u2 = 0;
-                zero.u3 = 0;
-                driver->setSpeeds(zero);
+                driver->zeroSpeeds();
                 driver->resetEncoderPulses();
             }
         }
@@ -64,7 +64,11 @@ class PingPongBotDriver : public rclcpp::Node {
             last_heartbeat_time = this->clock_.now();
         }
 
-        // pingpongbot_driver::Driver driver;
+        void resetEncoder(const std::shared_ptr<std_srvs::srv::Empty::Request> request,
+            std::shared_ptr<std_srvs::srv::Empty::Response> response) {
+                this->driver->resetEncoderPulses();
+        }
+
         std::shared_ptr<pingpongbot_driver::Driver> driver;
         pingpongbot_msgs::msg::WheelSpeeds speeds;
         rclcpp::Time last_heartbeat_time;
@@ -73,6 +77,7 @@ class PingPongBotDriver : public rclcpp::Node {
         rclcpp::Publisher<pingpongbot_msgs::msg::WheelAngles>::SharedPtr wheel_angles_pub_;
         rclcpp::Subscription<pingpongbot_msgs::msg::WheelSpeeds>::SharedPtr wheel_speeds_sub_;
         rclcpp::Subscription<std_msgs::msg::Empty>::SharedPtr heartbeat_sub_;
+        rclcpp::Service<std_srvs::srv::Empty>::SharedPtr reset_encoder_srv_;
 };
 
 int main(int argc, char * argv[]) {
