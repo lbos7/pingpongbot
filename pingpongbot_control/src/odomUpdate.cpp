@@ -46,6 +46,9 @@ class OdometryUpdate: public rclcpp::Node {
             odom_trans.header.frame_id = odom_id;
             odom_trans.child_frame_id = base_id;
 
+            timer_ = this->create_wall_timer(
+                std::chrono::milliseconds(10), std::bind(&OdometryUpdate::timerCallback, this));
+
             odom_pub_ = this->create_publisher<nav_msgs::msg::Odometry>("odom", 10);
 
             wheel_speeds_pub_ = this->create_publisher<pingpongbot_msgs::msg::WheelSpeeds>("wheel_speeds", 10);
@@ -79,6 +82,10 @@ class OdometryUpdate: public rclcpp::Node {
         }
 
     private:
+        void timerCallback() {
+            tf_broadcaster_->sendTransform(odom_trans);
+        }
+        
         void jointStateCallback(const sensor_msgs::msg::JointState & msg) {
             auto current_time = this->get_clock()->now();
             if (!first_joints_cb) {
@@ -103,7 +110,7 @@ class OdometryUpdate: public rclcpp::Node {
 
                 odom_pub_->publish(odom_msg);
 
-                RCLCPP_INFO(get_logger(), "Location of 'base_link' in 'map': [%.2f, %.2f]",
+                RCLCPP_INFO(get_logger(), "Location of 'base_link' in 'odom': [%.2f, %.2f]",
                         odom_msg.pose.pose.position.x, odom_msg.pose.pose.position.y);
                 
                 odom_msg.twist.twist.linear.x =
@@ -127,18 +134,18 @@ class OdometryUpdate: public rclcpp::Node {
                 odom_trans.transform.translation.y = new_trans.getOrigin().y();
                 odom_trans.transform.rotation = tf2::toMsg(new_trans.getRotation().normalized());
 
-                tf_broadcaster_->sendTransform(odom_trans);
-
+                // tf_broadcaster_->sendTransform(odom_trans);
                 prev_trans = new_trans;
+
             } else {
                 first_joints_cb = false;
-                odom_trans = geometry_msgs::msg::TransformStamped();
+                // odom_trans = geometry_msgs::msg::TransformStamped();
                 odom_trans.header.stamp = current_time;
                 odom_trans.header.frame_id = odom_id;
                 odom_trans.child_frame_id = base_id;
                 geometry_msgs::msg::Transform trans = odom_trans.transform;
                 tf2::fromMsg(trans, prev_trans);
-                tf_broadcaster_->sendTransform(odom_trans);
+                // tf_broadcaster_->sendTransform(odom_trans);
 
             }
             prev_time = current_time;
@@ -199,6 +206,7 @@ class OdometryUpdate: public rclcpp::Node {
         std::string odom_id;
         std::string base_id;
         bool first_joints_cb = true;
+        bool first_timer_cb = true;
         pingpongbot_control::OmniDrive omni_drive;
         tf2::Transform prev_trans;
         sensor_msgs::msg::JointState currentJointState;
