@@ -102,7 +102,7 @@ namespace pingpongbot_driver {
             i2cWrite(this->file, this->motorFixedPWMAddr, (uint8_t*)speedInts, 4);
             speedsCheck = this->getSpeeds();
             for (int i = 0; i < 3; i++) {
-                speedsSet[i] = speedInts[i] == speedsCheck[i];
+                speedsSet[i] = (((int8_t) 0) == speedsCheck[i]);
             }
             done = speedsSet[0] && speedsSet[1] && speedsSet[2];
         }

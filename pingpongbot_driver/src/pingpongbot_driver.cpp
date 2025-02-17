@@ -48,7 +48,7 @@ class PingPongBotDriver : public rclcpp::Node {
             wheel_angles_pub_->publish(msg);
             driver->setSpeeds(speeds);
             auto current_time = this->clock_.now();
-            if ((current_time - last_heartbeat_time).seconds() > 0.1) {
+            if ((current_time - last_heartbeat_time).seconds() > 0.175) {
                 RCLCPP_WARN(this->get_logger(), "Lost connection! Stopping wheels.");
                 driver->zeroSpeeds();
                 driver->resetEncoderPulses();
