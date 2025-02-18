@@ -119,6 +119,7 @@ class Controller : public rclcpp::Node {
                 
                 error_linx = goal_x - current_x;
                 error_liny = goal_y - current_y;
+                // error_lin = std::sqrt(std::pow(err))
                 error_ang = goal_yaw - current_yaw;
 
                 // error_ang = goal_yaw - current_yaw;
@@ -146,7 +147,7 @@ class Controller : public rclcpp::Node {
                     accum_error_ang += error_ang * dt;
 
                     auto vx = (Kp_x * error_linx) + (Ki_x * accum_error_linx) + (Kd_x * ((error_linx - prev_error_linx)/dt));
-                    auto vy = (Kp_y * error_liny) + (Ki_y * accum_error_liny) + (Kd_y * ((error_liny - prev_error_liny)/dt));
+                    auto vy = (Kp_x * error_liny) + (Ki_x * accum_error_liny) + (Kd_x * ((error_liny - prev_error_liny)/dt));
                     auto wz = (Kp_ang * error_ang) + (Ki_ang * accum_error_ang) + (Kd_ang * ((error_ang - prev_error_ang)/dt));
 
                     // if (vx < 0) {
