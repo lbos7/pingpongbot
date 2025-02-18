@@ -79,6 +79,7 @@ class OdometryUpdate: public rclcpp::Node {
             zero.u2 = 0;
             zero.u3 = 0;
             wheel_speeds_pub_->publish(zero);
+            sendResetRequest();
         }
 
     private:
@@ -93,6 +94,11 @@ class OdometryUpdate: public rclcpp::Node {
                 auto new_trans = relative_trans * prev_trans;
 
                 auto dt = (current_time - prev_time).seconds();
+
+                // if (std::sqrt(std::pow(new_trans.getOrigin().getX() - prev_trans.getOrigin().getX(), 2)
+                //     + std::pow(new_trans.getOrigin().getY() - prev_trans.getOrigin().getY(), 2)) >= .2) {
+                //         new_trans = prev_trans;
+                // }
 
                 odom_msg.header.stamp = current_time;
                 odom_msg.header.frame_id = odom_id;
@@ -110,8 +116,8 @@ class OdometryUpdate: public rclcpp::Node {
 
                 odom_pub_->publish(odom_msg);
 
-                RCLCPP_INFO(get_logger(), "Location of 'base_link' in 'odom': [%.2f, %.2f]",
-                        odom_msg.pose.pose.position.x, odom_msg.pose.pose.position.y);
+                // RCLCPP_INFO(get_logger(), "Location of 'base_link' in 'odom': [%.2f, %.2f]",
+                //         odom_msg.pose.pose.position.x, odom_msg.pose.pose.position.y);
                 
                 odom_msg.twist.twist.linear.x =
                     (new_trans.getOrigin().x() - prev_trans.getOrigin().x()) / dt;

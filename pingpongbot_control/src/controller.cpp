@@ -121,6 +121,15 @@ class Controller : public rclcpp::Node {
                 error_liny = goal_y - current_y;
                 error_ang = goal_yaw - current_yaw;
 
+                // error_ang = goal_yaw - current_yaw;
+                // if (error_ang > M_PI) {
+                //     error_ang -= 2 * M_PI;
+                // }
+                // else if (error_ang < -M_PI) {
+                //     error_ang += 2 * M_PI;
+                // }
+
+
                 distance_error = std::sqrt(std::pow(error_linx, 2) + std::pow(error_liny, 2));
 
                 if (!reached_goal && (distance_error < thresh_lin) && (std::abs(error_ang) < thresh_ang)) {

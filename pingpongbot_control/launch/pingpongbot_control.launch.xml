@@ -30,8 +30,8 @@
         <param from="$(find-pkg-share pingpongbot_control)/config/controller.yaml"/>
     </node>
 
-    <!-- <node pkg="rqt_reconfigure" exec="rqt_reconfigure"/> -->
+    <node pkg="rqt_reconfigure" exec="rqt_reconfigure"/>
 
-    <node pkg="rqt_plot" exec="rqt_plot"/>
+    <!-- <node pkg="rqt_plot" exec="rqt_plot"/> -->
 
 </launch>
