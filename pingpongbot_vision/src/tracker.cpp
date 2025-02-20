@@ -19,11 +19,11 @@ class Tracker : public rclcpp::Node {
 
             // Subscribe to raw image and depth streams from the camera
             image_sub_ = this->create_subscription<sensor_msgs::msg::Image>(
-                "camera/color/image_raw", 10, 
+                "camera/camera/color/image_raw", 10, 
                 std::bind(&Tracker::imageCallback, this, std::placeholders::_1));
 
             depth_sub_ = this->create_subscription<sensor_msgs::msg::Image>(
-                "camera/aligned_depth_to_color/image_raw", 10, 
+                "camera/camera/aligned_depth_to_color/image_raw", 10, 
                 std::bind(&Tracker::depthCallback, this, std::placeholders::_1));
 
             // Load the pre-trained ONNX model
@@ -40,7 +40,7 @@ class Tracker : public rclcpp::Node {
     private:
         void imageCallback(const sensor_msgs::msg::Image::SharedPtr msg) {
             cv::Mat frame = cv_bridge::toCvCopy(msg, "bgr8")->image;
-            detect_ball(frame);
+            detectBall(frame);
         }
     
         void depthCallback(const sensor_msgs::msg::Image::SharedPtr msg) {
@@ -48,7 +48,7 @@ class Tracker : public rclcpp::Node {
             depth_frame = cv_bridge::toCvCopy(msg, "16UC1")->image;
         }
     
-        void detect_ball(cv::Mat &frame) {
+        void detectBall(cv::Mat &frame) {
             cv::Mat blob = cv::dnn::blobFromImage(frame, 1.0 / 255, cv::Size(224, 224), cv::Scalar(), true, false);
             net.setInput(blob);
             cv::Mat output = net.forward();
@@ -56,10 +56,10 @@ class Tracker : public rclcpp::Node {
             float x = output.at<float>(0, 0) * frame.cols;
             float y = output.at<float>(0, 1) * frame.rows;
             
-            publish_position(x, y);
+            publishPosition(x, y);
         }
     
-        void publish_position(float x, float y) {
+        void publishPosition(float x, float y) {
             std::lock_guard<std::mutex> lock(mutex);
             if (depth_frame.empty()) return;
             
