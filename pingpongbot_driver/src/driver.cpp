@@ -8,6 +8,13 @@ namespace pingpongbot_driver {
 
     Driver::~Driver() {
         zeroSpeeds();
+        gpioWrite(this->wheel1INA, 0);
+        gpioWrite(this->wheel1INB, 0);
+        gpioWrite(this->wheel2INA, 0);
+        gpioWrite(this->wheel2INB, 0);
+        gpioWrite(this->wheel3INA, 0);
+        gpioWrite(this->wheel3INB, 0);
+        gpioTerminate();
         close(this->file);
     }
 
@@ -27,12 +34,19 @@ namespace pingpongbot_driver {
         int8_t speedInts[4] = {0, 0, 0, 0};
         std::array<int8_t, 3> speedsCheck;
         // Note - Motor order is CCW due to driver, but wheel order is CW due to calcs
-        speedInts[0] = (int8_t) (speeds.u1 * this->motor1RadPS2PWM);
-        speedInts[1] = (int8_t) (speeds.u3 * this->motor2RadPS2PWM * -1);
-        speedInts[2] = (int8_t) (speeds.u2 * this->motor3RadPS2PWM);
-        for (int i = 0; i < 3; i++) {
-            speedInts[i] = (int8_t) std::clamp((int)speedInts[i], -100, 100);
-        }
+        speedInts[0] = (int8_t) std::clamp((int) speeds.u1 * this->motor1RadPS2PWM, -100, 100);
+        speedInts[1] = (int8_t) std::clamp((int) speeds.u3 * this->motor2RadPS2PWM * -1, -100, 100);
+        speedInts[2] = (int8_t) std::clamp((int) speeds.u2 * this->motor3RadPS2PWM, -100, 100);
+        // for (int i = 0; i < 3; i++) {
+        //     if (speedInts[i] > 0) {
+        //         speedInts[i] = (int8_t) std::max((int)speedInts[i], 100);
+        //     } else if (speedInts[i] < 0) {
+        //         speedInts[i] = (int8_t) std::min((int)speedInts[i], -100);
+        //     }
+        // }
+        // for (int i = 0; i < 3; i++) {
+        //     speedInts[i] = std::clamp((int) speedInts[i], -100, 100);
+        // }
         while (!done) {
             i2cWrite(this->file, this->motorFixedPWMAddr, (uint8_t*)speedInts, 4);
             speedsCheck = this->getSpeeds();
@@ -62,6 +76,22 @@ namespace pingpongbot_driver {
     void Driver::setup() {
         i2cWrite(this->file, this->motorTypeAddr, &(this->motorType), 1);
         i2cWrite(this->file, this->motorEncoderPolarityAddr, &(this->motorPolarity), 1);
+        if (gpioInitialise() < 0) {
+            std::cerr << "pigpio initialization failed" << std::endl;
+            throw std::runtime_error("GPIO Initialization failed");
+        }
+
+        // Set GPIO as an output
+        gpioSetMode(this->wheel1PWM, PI_OUTPUT);
+        gpioSetMode(this->wheel1INA, PI_OUTPUT);
+        gpioSetMode(this->wheel1INB, PI_OUTPUT);
+        gpioSetMode(this->wheel2PWM, PI_OUTPUT);
+        gpioSetMode(this->wheel2INA, PI_OUTPUT);
+        gpioSetMode(this->wheel2INB, PI_OUTPUT);
+        gpioSetMode(this->wheel3PWM, PI_OUTPUT);
+        gpioSetMode(this->wheel3INA, PI_OUTPUT);
+        gpioSetMode(this->wheel3INB, PI_OUTPUT);
+
     }
 
     pingpongbot_msgs::msg::WheelAngles Driver::getWheelAngles() {

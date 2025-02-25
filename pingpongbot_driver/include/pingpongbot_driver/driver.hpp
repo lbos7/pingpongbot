@@ -11,6 +11,7 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <linux/i2c-dev.h>
+#include <pigpio.h>
 
 #include "pingpongbot_msgs/msg/wheel_speeds.hpp"
 #include "pingpongbot_msgs/msg/wheel_angles.hpp"
@@ -40,7 +41,16 @@ namespace pingpongbot_driver {
             int file = openI2CBus(i2cDevice, motorDriverAddr);
             uint8_t motorType = 0;
             uint8_t motorPolarity = 1;
-            std::array<int8_t, 3> getSpeeds();
+            int wheel1PWM = 16;
+            int wheel1INA = 20;
+            int wheel1INB = 21; 
+            int wheel2PWM = 13;
+            int wheel2INA = 19;
+            int wheel2INB = 26;
+            int wheel3PWM = 12;
+            int wheel3INA = 1;
+            int wheel3INB = 7;
+            // std::array<int8_t, 3> getSpeeds();
             std::array<int32_t, 3> getEncoderPulses();
             void setup();
 
@@ -51,6 +61,7 @@ namespace pingpongbot_driver {
             void resetEncoderPulses();
             void zeroSpeeds();
             pingpongbot_msgs::msg::WheelAngles getWheelAngles();
+            std::array<int8_t, 3> getSpeeds();
 
     };
 

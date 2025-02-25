@@ -1,4 +1,5 @@
 #include <chrono>
+#include <array>
 
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/empty.hpp"
@@ -46,13 +47,39 @@ class PingPongBotDriver : public rclcpp::Node {
         void timerCallback() {
             auto msg = driver->getWheelAngles();
             wheel_angles_pub_->publish(msg);
+            // pingpongbot_msgs::msg::WheelSpeeds speeds;
+            // speeds.u1 = 60;
+            // speeds.u2 = 60;
+            // speeds.u3 = 60;
             driver->setSpeeds(speeds);
             auto current_time = this->clock_.now();
             if ((current_time - last_heartbeat_time).seconds() > 0.175) {
-                RCLCPP_WARN(this->get_logger(), "Lost connection! Stopping wheels.");
+                // RCLCPP_WARN(this->get_logger(), "Lost connection! Stopping wheels.");
                 driver->zeroSpeeds();
-                driver->resetEncoderPulses();
+                // driver->resetEncoderPulses();
             }
+            static pingpongbot_msgs::msg::WheelAngles prev_angles;  // Store previous wheel angles
+
+            // RCLCPP_INFO(rclcpp::get_logger("wheel_logger"),
+            //             "Wheel Angles: θ1: %.6f, θ2: %.6f, θ3: %.6f", 
+            //             msg.theta1, msg.theta2, msg.theta3);
+
+            // // Compute and log delta values (change in wheel angles)
+            // double delta_theta1 = msg.theta1 - prev_angles.theta1;
+            // double delta_theta2 = msg.theta2 - prev_angles.theta2;
+            // double delta_theta3 = msg.theta3 - prev_angles.theta3;
+
+            // RCLCPP_INFO(rclcpp::get_logger("wheel_logger"),
+            //             "ΔTheta: dθ1: %.6f, dθ2: %.6f, dθ3: %.6f",
+            //             delta_theta1, delta_theta2, delta_theta3);
+
+            // std::array<int8_t, 3> speedInts = driver->getSpeeds();
+
+            // Update previous angles
+            // RCLCPP_INFO(rclcpp::get_logger("wheel_logger"),
+            //             "Motor Speeds: 1: %.6f, 2: %.6f, 3: %.6f", 
+            //             speedInts[0], speedInts[1], speedInts[2]);
+            prev_angles = msg;
         }
 
         void wheelSpeedsCallback(const pingpongbot_msgs::msg::WheelSpeeds & msg) {
