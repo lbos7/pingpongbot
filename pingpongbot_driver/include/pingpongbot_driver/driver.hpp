@@ -63,7 +63,7 @@ namespace pingpongbot_driver {
             void zeroSpeeds();
             pingpongbot_msgs::msg::WheelAngles getWheelAngles();
             std::array<int8_t, 3> getSpeeds();
-            void Driver::pwmThread();
+            void pwmThread();
     };
 }
 

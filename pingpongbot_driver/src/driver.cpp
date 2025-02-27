@@ -29,9 +29,9 @@ namespace pingpongbot_driver {
     }
 
     void Driver::setSpeeds(pingpongbot_msgs::msg::WheelSpeeds speeds) {
-        this->currentWheel1Duty = (int) std::clamp(std::abs(speeds.u1 * this->motor1RadPS2PWM), 0, 100);
-        this->currentWheel2Duty = (int) std::clamp(std::abs(speeds.u2 * this->motor1RadPS2PWM), 0, 100);
-        this->currentWheel3Duty = (int) std::clamp(std::abs(speeds.u3 * this->motor1RadPS2PWM), 0, 100);
+        this->currentWheel1Duty = std::clamp((int) (std::abs(speeds.u1 * this->motor1RadPS2PWM)), 0, 100);
+        this->currentWheel2Duty = std::clamp((int) (std::abs(speeds.u2 * this->motor1RadPS2PWM)), 0, 100);
+        this->currentWheel3Duty = std::clamp((int) (std::abs(speeds.u3 * this->motor1RadPS2PWM)), 0, 100);
 
         this->wheel1DutyCycle.store(this->currentWheel1Duty);
         pwmWrite(this->wheel2PWM, this->currentWheel2Duty);
@@ -46,7 +46,7 @@ namespace pingpongbot_driver {
         }
 
         if (speeds.u2 > 0) {
-            digitalWrite(this->wheel21INA, LOW);
+            digitalWrite(this->wheel2INA, LOW);
             digitalWrite(this->wheel2INB, HIGH);
         } else if (speeds.u2 < 0) {
             digitalWrite(this->wheel2INA, HIGH);
@@ -62,10 +62,12 @@ namespace pingpongbot_driver {
         }
     }
 
+
+
     std::array<int32_t, 3> Driver::getEncoderPulses() {
         std::array<int32_t, 3> counts = {0, 0, 0};
 
-    // Read 16 bytes of encoder data from the I2C device
+        // Read 16 bytes of encoder data from the I2C device
         uint8_t encoderData[16];
         for (int i = 0; i < 16; i++) {
             encoderData[i] = wiringPiI2CReadReg8(this->file, this->motorEncoderTotalAddr + i);
@@ -76,10 +78,18 @@ namespace pingpongbot_driver {
             // Combine 4 bytes to form a 32-bit integer (little-endian format)
             int32_t count = encoderData[i * 4] | (encoderData[i * 4 + 1] << 8) |
                             (encoderData[i * 4 + 2] << 16) | (encoderData[i * 4 + 3] << 24);
+
+            // Apply the sign inversion for the second encoder if needed
+            if (i == 1) {
+                counts[i] = count * -1;
+            } else {
+                counts[i] = count;
+            }
         }
-        counts[1] *= -1;
+
         return counts;
     }
+
 
     void Driver::setup() {
         this->file = wiringPiI2CSetup(this->motorEncoderTotalAddr);
@@ -151,10 +161,13 @@ namespace pingpongbot_driver {
     }
 
     void Driver::zeroSpeeds() {
-        this->wheel1DutyCycle.store(0);
-        pwmWrite(this->wheel2PWM, 0);
-        pwmWrite(this->wheel3PWM, 0);
+        pingpongbot_msgs::msg::WheelSpeeds speeds;
+        speeds.u1 = 0;
+        speeds.u2 = 0;
+        speeds.u3 = 0;
+        this->setSpeeds(speeds);
     }
+    
 
     void Driver::pwmThread() {
 

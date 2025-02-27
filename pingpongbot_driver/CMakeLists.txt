@@ -12,8 +12,25 @@ find_package(std_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(pingpongbot_msgs REQUIRED)
 
+find_library(WIRINGPI_LIBRARIES NAMES wiringPi)
+
+# Try to find the wiringPi headers
+find_path(WIRINGPI_INCLUDE_DIRS NAMES wiringPi.h)
+
+# Ensure wiringPi was found
+if(NOT WIRINGPI_LIBRARIES)
+  message(FATAL_ERROR "Could not find WiringPi library")
+endif()
+
+if(NOT WIRINGPI_INCLUDE_DIRS)
+  message(FATAL_ERROR "Could not find WiringPi header")
+endif()
+
+
 add_executable(pingpongbot_driver src/pingpongbot_driver.cpp src/driver.cpp)
 ament_target_dependencies(pingpongbot_driver rclcpp pingpongbot_msgs std_msgs std_srvs)
+target_include_directories(pingpongbot_driver PRIVATE ${WIRINGPI_INCLUDE_DIRS})
+target_link_libraries(pingpongbot_driver ${WIRINGPI_LIBRARIES})
 
 target_include_directories(pingpongbot_driver
   PUBLIC
