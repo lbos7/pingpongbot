@@ -8,103 +8,118 @@ namespace pingpongbot_driver {
 
     Driver::~Driver() {
         zeroSpeeds();
-        gpioWrite(this->wheel1INA, 0);
-        gpioWrite(this->wheel1INB, 0);
-        gpioWrite(this->wheel2INA, 0);
-        gpioWrite(this->wheel2INB, 0);
-        gpioWrite(this->wheel3INA, 0);
-        gpioWrite(this->wheel3INB, 0);
-        gpioTerminate();
-        close(this->file);
+        this->wheel1ThreadRunning.store(false);
+        if (wheel1PWMThread.joinable()) {
+            wheel1PWMThread.join();  // Wait for thread to finish
+        }
+        digitalWrite(this->wheel1INA, LOW);
+        digitalWrite(this->wheel1INB, LOW);
+        digitalWrite(this->wheel2INA, LOW);
+        digitalWrite(this->wheel2INB, LOW);
+        digitalWrite(this->wheel3INA, LOW);
+        digitalWrite(this->wheel3INB, LOW);
     }
 
     std::array<int8_t, 3> Driver::getSpeeds() {
-        int8_t speedInts[4] = {0, 0, 0, 0};
         std::array<int8_t, 3> speeds;
-        i2cRead(this->file, this->motorFixedPWMAddr, (uint8_t*)speedInts, 4);
         for (int i = 0; i < 3; i++) {
-            speeds[i] = speedInts[i];
+            speeds[i] = wiringPiI2CReadReg8(file, motorFixedPWMAddr + i);
         }
         return speeds;
     }
 
     void Driver::setSpeeds(pingpongbot_msgs::msg::WheelSpeeds speeds) {
-        bool done = false;
-        bool speedsSet[3] = {false, false, false};
-        int8_t speedInts[4] = {0, 0, 0, 0};
-        std::array<int8_t, 3> speedsCheck;
-        // Note - Motor order is CCW due to driver, but wheel order is CW due to calcs
-        speedInts[0] = (int8_t) std::clamp((int) speeds.u1 * this->motor1RadPS2PWM, -100, 100);
-        speedInts[1] = (int8_t) std::clamp((int) speeds.u3 * this->motor2RadPS2PWM * -1, -100, 100);
-        speedInts[2] = (int8_t) std::clamp((int) speeds.u2 * this->motor3RadPS2PWM, -100, 100);
-        // for (int i = 0; i < 3; i++) {
-        //     if (speedInts[i] > 0) {
-        //         speedInts[i] = (int8_t) std::max((int)speedInts[i], 100);
-        //     } else if (speedInts[i] < 0) {
-        //         speedInts[i] = (int8_t) std::min((int)speedInts[i], -100);
-        //     }
-        // }
-        // for (int i = 0; i < 3; i++) {
-        //     speedInts[i] = std::clamp((int) speedInts[i], -100, 100);
-        // }
-        while (!done) {
-            i2cWrite(this->file, this->motorFixedPWMAddr, (uint8_t*)speedInts, 4);
-            speedsCheck = this->getSpeeds();
-            for (int i = 0; i < 3; i++) {
-                speedsSet[i] = speedInts[i] == speedsCheck[i];
-            }
-            done = speedsSet[0] && speedsSet[1] && speedsSet[2];
+        this->currentWheel1Duty = (int) std::clamp(std::abs(speeds.u1 * this->motor1RadPS2PWM), 0, 100);
+        this->currentWheel2Duty = (int) std::clamp(std::abs(speeds.u2 * this->motor1RadPS2PWM), 0, 100);
+        this->currentWheel3Duty = (int) std::clamp(std::abs(speeds.u3 * this->motor1RadPS2PWM), 0, 100);
+
+        this->wheel1DutyCycle.store(this->currentWheel1Duty);
+        pwmWrite(this->wheel2PWM, this->currentWheel2Duty);
+        pwmWrite(this->wheel3PWM, this->currentWheel3Duty);
+        
+        if (speeds.u1 > 0) {
+            digitalWrite(this->wheel1INA, LOW);
+            digitalWrite(this->wheel1INB, HIGH);
+        } else if (speeds.u1 < 0) {
+            digitalWrite(this->wheel1INA, HIGH);
+            digitalWrite(this->wheel1INB, LOW);
+        }
+
+        if (speeds.u2 > 0) {
+            digitalWrite(this->wheel21INA, LOW);
+            digitalWrite(this->wheel2INB, HIGH);
+        } else if (speeds.u2 < 0) {
+            digitalWrite(this->wheel2INA, HIGH);
+            digitalWrite(this->wheel2INB, LOW);
+        }
+
+        if (speeds.u3 > 0) {
+            digitalWrite(this->wheel3INA, LOW);
+            digitalWrite(this->wheel3INB, HIGH);
+        } else if (speeds.u3 < 0) {
+            digitalWrite(this->wheel3INA, HIGH);
+            digitalWrite(this->wheel3INB, LOW);
         }
     }
 
     std::array<int32_t, 3> Driver::getEncoderPulses() {
-        uint8_t encoderData[16];
         std::array<int32_t, 3> counts = {0, 0, 0};
-        i2cRead(this->file, this->motorEncoderTotalAddr, encoderData, 16);
+
+    // Read 16 bytes of encoder data from the I2C device
+        uint8_t encoderData[16];
+        for (int i = 0; i < 16; i++) {
+            encoderData[i] = wiringPiI2CReadReg8(this->file, this->motorEncoderTotalAddr + i);
+        }
+
+        // Process the data to extract counts
         for (int i = 0; i < 3; i++) {
+            // Combine 4 bytes to form a 32-bit integer (little-endian format)
             int32_t count = encoderData[i * 4] | (encoderData[i * 4 + 1] << 8) |
                             (encoderData[i * 4 + 2] << 16) | (encoderData[i * 4 + 3] << 24);
-            if (i == 1) {
-                counts[i] = count * -1;
-            } else {
-                counts[i] = count;
-            }
         }
+        counts[1] *= -1;
         return counts;
     }
 
     void Driver::setup() {
-        i2cWrite(this->file, this->motorTypeAddr, &(this->motorType), 1);
-        i2cWrite(this->file, this->motorEncoderPolarityAddr, &(this->motorPolarity), 1);
-        if (gpioInitialise() < 0) {
-            std::cerr << "pigpio initialization failed" << std::endl;
-            throw std::runtime_error("GPIO Initialization failed");
+        this->file = wiringPiI2CSetup(this->motorEncoderTotalAddr);
+        if (this->file == -1) {
+            // Handle I2C initialization failure
+            std::cerr << "Failed to initialize I2C device" << std::endl;
+        }
+        if (file < 0) {
+            std::cerr << "Failed to initialize I2C device" << std::endl;
+            std::exit(EXIT_FAILURE);
+        }
+        wiringPiI2CWriteReg8(file, motorTypeAddr, motorType);
+        wiringPiI2CWriteReg8(file, motorEncoderPolarityAddr, motorPolarity);
+        if (wiringPiSetupGpio() == -1) {
+            std::cerr << "WiringPi initialization failed!" << std::endl;
+            std::exit(EXIT_FAILURE);
         }
 
-        // Set GPIO as an output
-        gpioSetMode(this->wheel1PWM, PI_OUTPUT);
-        gpioSetMode(this->wheel1INA, PI_OUTPUT);
-        gpioSetMode(this->wheel1INB, PI_OUTPUT);
-        gpioSetMode(this->wheel2PWM, PI_OUTPUT);
-        gpioSetMode(this->wheel2INA, PI_OUTPUT);
-        gpioSetMode(this->wheel2INB, PI_OUTPUT);
-        gpioSetMode(this->wheel3PWM, PI_OUTPUT);
-        gpioSetMode(this->wheel3INA, PI_OUTPUT);
-        gpioSetMode(this->wheel3INB, PI_OUTPUT);
+        pinMode(this->wheel1PWM, OUTPUT);
+        pinMode(this->wheel1INA, OUTPUT);
+        pinMode(this->wheel1INB, OUTPUT);
+        pinMode(this->wheel2PWM, PWM_OUTPUT);
+        pinMode(this->wheel2INA, OUTPUT);
+        pinMode(this->wheel2INB, OUTPUT);
+        pinMode(this->wheel3PWM, PWM_OUTPUT);
+        pinMode(this->wheel3INA, OUTPUT);
+        pinMode(this->wheel3INB, OUTPUT);
+
+        pwmSetMode(PWM_MODE_MS); // Mark-Space mode for precise frequency
+        pwmSetRange(this->pwmRange);  // Set range for duty cycle (0-100 for percentage control)
+        this->wheel1PWMThread = std::thread(&Driver::pwmThread, this);
 
     }
 
     pingpongbot_msgs::msg::WheelAngles Driver::getWheelAngles() {
-        std::array<int32_t, 3> counts = this->getEncoderPulses();
-        std::array<double, 3> wheelAngles = {0.0, 0.0, 0.0};
+        std::array<int32_t, 3> counts = getEncoderPulses();
         pingpongbot_msgs::msg::WheelAngles adjustedWheelAngles;
-        for (int i = 0; i < 3; i++) {
-            wheelAngles[i] = ((double) counts[i]) * this->radPerCount;
-        }
-        // Note - Motor order is CCW due to driver, but wheel order is CW due to calcs
-        adjustedWheelAngles.theta1 = wheelAngles[0];
-        adjustedWheelAngles.theta2 = wheelAngles[2];
-        adjustedWheelAngles.theta3 = wheelAngles[1];
+        adjustedWheelAngles.theta1 = counts[0] * radPerCount;
+        adjustedWheelAngles.theta2 = counts[2] * radPerCount;
+        adjustedWheelAngles.theta3 = counts[1] * radPerCount;
         return adjustedWheelAngles;
     }
 
@@ -112,59 +127,47 @@ namespace pingpongbot_driver {
         bool done = false;
         bool countsReset[3] = {false, false, false};
         std::array<int32_t, 3> counts;
+    
+        // Create a buffer of zeros to send to the encoder to reset the pulses
         uint8_t encoderZero[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    
         while (!done) {
-            i2cWrite(this->file, this->motorEncoderTotalAddr, (uint8_t*)encoderZero, 16);
+            // Write the encoder reset data (16 bytes of zeros)
+            for (int i = 0; i < 16; i++) {
+                wiringPiI2CWriteReg8(this->file, this->motorEncoderTotalAddr + i, encoderZero[i]);
+            }
+    
+            // Read the encoder pulses to check if reset was successful
             counts = this->getEncoderPulses();
+    
+            // Check if all encoder counts are zero (indicating reset)
             for (int i = 0; i < 3; i++) {
                 countsReset[i] = counts[i] == 0;
             }
+    
+            // If all encoders are reset, exit the loop
             done = countsReset[0] && countsReset[1] && countsReset[2];
         }
     }
 
     void Driver::zeroSpeeds() {
-        bool done = false;
-        bool speedsSet[3] = {false, false, false};
-        int8_t speedInts[4] = {0, 0, 0, 0};
-        std::array<int8_t, 3> speedsCheck;
-        while (!done) {
-            i2cWrite(this->file, this->motorFixedPWMAddr, (uint8_t*)speedInts, 4);
-            speedsCheck = this->getSpeeds();
-            for (int i = 0; i < 3; i++) {
-                speedsSet[i] = (((int8_t) 0) == speedsCheck[i]);
-            }
-            done = speedsSet[0] && speedsSet[1] && speedsSet[2];
-        }
+        this->wheel1DutyCycle.store(0);
+        pwmWrite(this->wheel2PWM, 0);
+        pwmWrite(this->wheel3PWM, 0);
     }
 
-    int openI2CBus(const char* I2C_DEVICE, uint8_t MOTOR_DRIVER_ADDR) {
-        int file = open(I2C_DEVICE, O_RDWR);
-        if (file < 0) {
-            std::cerr << "Failed to open I2C bus\n";
-            return -1;
-        }
-        if (ioctl(file, I2C_SLAVE, MOTOR_DRIVER_ADDR) < 0) {
-            std::cerr << "Failed to connect to motor driver\n";
-            return -1;
-        }
-        return file;
-    }
+    void Driver::pwmThread() {
 
-    bool i2cWrite(int file, uint8_t reg, uint8_t *data, size_t len) {
-        uint8_t buffer[len + 1];
-        buffer[0] = reg;
-        for (size_t i = 0; i < len; i++) {
-            buffer[i + 1] = data[i];
-        }
-        return write(file, buffer, len + 1) == len + 1;
-    }
+        while (this->wheel1ThreadRunning.load()) {
+            int highTime = (this->pwmPeriod * this->wheel1DutyCycle.load()) / 100;  // Load current duty cycle
+            int lowTime = this->pwmPeriod - highTime;  // Calculate LOW time
 
-    bool i2cRead(int file, uint8_t reg, uint8_t *data, size_t len) {
-        if (write(file, &reg, 1) != 1) {
-            std::cerr << "Error setting register address\n";
-            return false;
+            digitalWrite(this->wheel1PWM, HIGH);  // Set the pin HIGH
+            delayMicroseconds(highTime);      // Wait for HIGH time
+            digitalWrite(this->wheel1PWM, LOW);   // Set the pin LOW
+            delayMicroseconds(lowTime);      // Wait for LOW time
         }
-        return read(file, data, len) == len;
+
+        std::cout << "PWM thread stopped." << std::endl;
     }
 }

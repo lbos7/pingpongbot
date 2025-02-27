@@ -3,31 +3,24 @@
 
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <chrono>
 #include <thread>
 #include <stddef.h>
 #include <iostream>
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/ioctl.h>
-#include <linux/i2c-dev.h>
-#include <pigpio.h>
+#include <wiringPiI2C.h>
+#include <wiringPi.h>
+#include <softPwm.h>
+#include <cmath>
 
 #include "pingpongbot_msgs/msg/wheel_speeds.hpp"
 #include "pingpongbot_msgs/msg/wheel_angles.hpp"
 
 namespace pingpongbot_driver {
 
-    int openI2CBus(const char* I2C_DEVICE, uint8_t MOTOR_DRIVER_ADDR);
-
-    bool i2cWrite(int file, uint8_t reg, uint8_t *data, size_t len);
-
-    bool i2cRead(int file, uint8_t reg, uint8_t *data, size_t len);
-
     class Driver {
 
         private:
-            const char* i2cDevice = "/dev/i2c-1";
             uint8_t motorDriverAddr = 0x34;
             uint8_t motorTypeAddr = 0x14;
             uint8_t motorEncoderPolarityAddr = 0x15;
@@ -38,7 +31,10 @@ namespace pingpongbot_driver {
             double motor2RadPS2PWM = .61565;
             double motor3RadPS2PWM = .61747;
             double radPerCount = .01570769;
-            int file = openI2CBus(i2cDevice, motorDriverAddr);
+            int currentWheel1Duty;
+            int currentWheel2Duty;
+            int currentWheel3Duty;
+            int file;
             uint8_t motorType = 0;
             uint8_t motorPolarity = 1;
             int wheel1PWM = 16;
@@ -50,7 +46,12 @@ namespace pingpongbot_driver {
             int wheel3PWM = 12;
             int wheel3INA = 1;
             int wheel3INB = 7;
-            // std::array<int8_t, 3> getSpeeds();
+            int pwmFreq = 1000;
+            int pwmRange = 100;
+            int pwmPeriod = 1000;
+            std::atomic<int> wheel1DutyCycle;
+            std::atomic<bool> wheel1ThreadRunning;
+            std::thread wheel1PWMThread;
             std::array<int32_t, 3> getEncoderPulses();
             void setup();
 
@@ -62,9 +63,8 @@ namespace pingpongbot_driver {
             void zeroSpeeds();
             pingpongbot_msgs::msg::WheelAngles getWheelAngles();
             std::array<int8_t, 3> getSpeeds();
-
+            void Driver::pwmThread();
     };
-
 }
 
 #endif
