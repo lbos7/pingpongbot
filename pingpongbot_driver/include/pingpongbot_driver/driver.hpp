@@ -27,9 +27,9 @@ namespace pingpongbot_driver {
             uint8_t motorFixedPWMAddr = 0x1F;
             uint8_t motorFixedSpeedAddr = 0x33;
             uint8_t motorEncoderTotalAddr = 0x3C;
-            double motor1RadPS2PWM = .60122;
-            double motor2RadPS2PWM = .61565;
-            double motor3RadPS2PWM = .61747;
+            double motor1RadPS2PWM = .60122 * .63;
+            double motor2RadPS2PWM = .61565 * .63;
+            double motor3RadPS2PWM = .61747 * .63;
             double radPerCount = .01570769;
             int currentWheel1Duty;
             int currentWheel2Duty;
