@@ -3,7 +3,7 @@
 <package format="3">
   <name>pingpongbot_driver</name>
   <version>1.0.0</version>
-  <description>ROS2 Package for interacting with the pingpongbot motor driver</description>
+  <description>ROS2 Package for interacting with the pingpongbot_hardware</description>
   <maintainer email="loganstuartboswell@gmail.com">Logan Boswell</maintainer>
   <license>GPLv3</license>
 
@@ -16,6 +16,8 @@
   <depend>pingpongbot_msgs</depend>
   <depend>std_msgs</depend>
   <depend>std_srvs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>tf2</depend>
 
   <export>
     <build_type>ament_cmake</build_type>

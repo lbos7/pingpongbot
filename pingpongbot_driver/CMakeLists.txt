@@ -10,6 +10,8 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(tf2 REQUIRED)
 find_package(pingpongbot_msgs REQUIRED)
 
 find_library(WIRINGPI_LIBRARIES NAMES wiringPi)
@@ -28,7 +30,7 @@ endif()
 
 
 add_executable(driver src/driver.cpp src/interface.cpp)
-ament_target_dependencies(driver rclcpp pingpongbot_msgs std_msgs std_srvs)
+ament_target_dependencies(driver rclcpp pingpongbot_msgs std_msgs std_srvs sensor_msgs tf2)
 target_include_directories(driver PRIVATE ${WIRINGPI_INCLUDE_DIRS})
 target_link_libraries(driver ${WIRINGPI_LIBRARIES})
 
@@ -53,7 +55,9 @@ install(DIRECTORY
   DESTINATION include/${PROJECT_NAME}
 )
 
-
+include_directories(
+  ${tf2_INCLUDE_DIRS}
+)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
