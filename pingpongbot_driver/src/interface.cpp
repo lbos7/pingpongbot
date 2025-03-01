@@ -102,8 +102,14 @@ namespace pingpongbot_driver {
             std::cerr << "Failed to initialize IMU" << std::endl;
             exit(1);
         }
+        wiringPiI2CWriteReg8(fd, this->accelSetupAddr, 0b01101010);
+        wiringPiI2CWriteReg8(fd, this->gyroSetupAddr, 0b01100100);
         wiringPiI2CWriteReg8(this->fd, this->motorTypeAddr, this->motorType);
         wiringPiI2CWriteReg8(this->fd, this->motorEncoderPolarityAddr, this->motorPolarity);
+
+        pingpongbot_msgs::msg::IMU offsets = this->calculateIMUOffsets();
+        this->setIMUOffsets(offsets);
+
         if (wiringPiSetupGpio() == -1) {
             std::cerr << "WiringPi initialization failed!" << std::endl;
             std::exit(EXIT_FAILURE);
@@ -170,6 +176,7 @@ namespace pingpongbot_driver {
     }
 
     pingpongbot_msgs::msg::IMU Interface::getIMUData() {
+
         uint8_t xaLow = wiringPiI2CReadReg8(this->fi, this->xAccelLowAddr);
         uint8_t xaHigh = wiringPiI2CReadReg8(this->fi, this->xAccelHighAddr);
         uint8_t yaLow = wiringPiI2CReadReg8(this->fi, this->yAccelLowAddr);
@@ -191,14 +198,48 @@ namespace pingpongbot_driver {
         int16_t zgRaw = (int16_t)((zgHigh << 8) | zgLow);
 
         pingpongbot_msgs::msg::IMU msg;
-        msg.xa = xaRaw * this->accelScale;
-        msg.ya = yaRaw * this->accelScale;
-        msg.za = zaRaw * this->accelScale;
-        msg.xg = xgRaw * this->gyroScale;
-        msg.yg = ygRaw * this->gyroScale;
-        msg.zg = zgRaw * this->gyroScale;
+        msg.xa = (xaRaw * this->accelScale) - xaOffset;
+        msg.ya = (yaRaw * this->accelScale) - yaOffset;
+        msg.za = (zaRaw * this->accelScale) - zaOffset;
+        msg.xg = (xgRaw * this->gyroScale) - xgOffset;
+        msg.yg = (ygRaw * this->gyroScale) - ygOffset;
+        msg.zg = (zgRaw * this->gyroScale) - zgOffset;
         
         return msg;
+    }
+
+    pingpongbot_msgs::msg::IMU Interface::calculateIMUOffsets() {
+
+        pingpongbot_msgs::msg::IMU offsets;
+        pingpongbot_msgs::msg::IMU newData;
+
+        for (int i = 0; i < 100; i++) {
+            newData = this->getIMUData();
+            offsets.xa += newData.xa;
+            offsets.ya += newData.ya;
+            offsets.za += newData.za;
+            offsets.xg += newData.xg;
+            offsets.yg += newData.yg;
+            offsets.zg += newData.zg;
+        }
+
+        offsets.xa /= 100;
+        offsets.ya /= 100;
+        offsets.za /= 100;
+        offsets.xg /= 100;
+        offsets.yg /= 100;
+        offsets.zg /= 100;
+
+        return offsets;
+    }
+
+    void Interface::setIMUOffsets(pingpongbot_msgs::msg::IMU data) {
+        this->xaOffset = data.xa;
+        this->yaOffset = data.ya;
+        this->zaOffset = data.za - 9.81;
+        this->xgOffset = data.xg;
+        this->ygOffset = data.yg;
+        this->zgOffset = data.zg;
     }
     
 

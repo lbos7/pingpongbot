@@ -4,58 +4,58 @@
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/empty.hpp"
 #include "std_srvs/srv/empty.hpp"
-#include "pingpongbot_driver/driver.hpp"
+#include "pingpongbot_driver/interface.hpp"
 #include "pingpongbot_msgs/msg/wheel_speeds.hpp"
 #include "pingpongbot_msgs/msg/wheel_angles.hpp"
 
-class PingPongBotDriver : public rclcpp::Node {
+class Driver : public rclcpp::Node {
     
     public:
-        PingPongBotDriver() : Node("pingpongbot_driver") {
+        Driver() : Node("driver") {
 
-            driver = std::make_shared<pingpongbot_driver::Driver>();
+            interface = std::make_shared<pingpongbot_driver::Interface>();
 
             // Check if driver_ is correctly initialized
-            if (!driver) {
-                RCLCPP_ERROR(this->get_logger(), "Failed to initialize the Driver object.");
+            if (!interface) {
+                RCLCPP_ERROR(this->get_logger(), "Failed to initialize the Interface object.");
             }
 
-            driver->resetEncoderPulses();
+            this->interface->resetEncoderPulses();
 
             timer_ = this->create_wall_timer(
-                std::chrono::milliseconds(10), std::bind(&PingPongBotDriver::timerCallback, this));
+                std::chrono::milliseconds(10), std::bind(&Driver::timerCallback, this));
 
             wheel_angles_pub_ = this->create_publisher<pingpongbot_msgs::msg::WheelAngles>("wheel_angles", 10);
 
             wheel_speeds_sub_ = this->create_subscription<pingpongbot_msgs::msg::WheelSpeeds>(
-                "wheel_speeds", 10, std::bind(&PingPongBotDriver::wheelSpeedsCallback, this, std::placeholders::_1));
+                "wheel_speeds", 10, std::bind(&Driver::wheelSpeedsCallback, this, std::placeholders::_1));
 
             heartbeat_sub_ = this->create_subscription<std_msgs::msg::Empty>(
-                "heartbeat", 10, std::bind(&PingPongBotDriver::heartbeatCallback, this, std::placeholders::_1));
+                "heartbeat", 10, std::bind(&Driver::heartbeatCallback, this, std::placeholders::_1));
 
             reset_encoder_srv_ = this->create_service<std_srvs::srv::Empty>(
-                "reset_encoder", std::bind(&PingPongBotDriver::resetEncoder, this, std::placeholders::_1, std::placeholders::_2));
+                "reset_encoder", std::bind(&Driver::resetEncoder, this, std::placeholders::_1, std::placeholders::_2));
         }
 
-        ~PingPongBotDriver() {
+        ~Driver() {
             RCLCPP_INFO(this->get_logger(), "Shutting down PingPongBotDriver...");
-            driver.reset(); // Explicitly reset the driver before node shutdown
+            this->interface.reset(); // Explicitly reset the driver before node shutdown
         }
     
 
     private:
         void timerCallback() {
-            auto msg = driver->getWheelAngles();
+            auto msg = this->interface->getWheelAngles();
             wheel_angles_pub_->publish(msg);
             // pingpongbot_msgs::msg::WheelSpeeds speeds;
             // speeds.u1 = 60;
             // speeds.u2 = 60;
             // speeds.u3 = 60;
-            driver->setSpeeds(speeds);
+            this->interface->setSpeeds(speeds);
             auto current_time = this->clock_.now();
             if ((current_time - last_heartbeat_time).seconds() > 0.175) {
                 // RCLCPP_WARN(this->get_logger(), "Lost connection! Stopping wheels.");
-                driver->zeroSpeeds();
+                this->interface->zeroSpeeds();
                 // driver->resetEncoderPulses();
             }
             static pingpongbot_msgs::msg::WheelAngles prev_angles;  // Store previous wheel angles
@@ -93,10 +93,10 @@ class PingPongBotDriver : public rclcpp::Node {
 
         void resetEncoder(const std::shared_ptr<std_srvs::srv::Empty::Request> request,
             std::shared_ptr<std_srvs::srv::Empty::Response> response) {
-                this->driver->resetEncoderPulses();
+                this->interface->resetEncoderPulses();
         }
 
-        std::shared_ptr<pingpongbot_driver::Driver> driver;
+        std::shared_ptr<pingpongbot_driver::Interface> interface;
         pingpongbot_msgs::msg::WheelSpeeds speeds;
         rclcpp::Time last_heartbeat_time;
         rclcpp::TimerBase::SharedPtr timer_;
@@ -109,7 +109,7 @@ class PingPongBotDriver : public rclcpp::Node {
 
 int main(int argc, char * argv[]) {
     rclcpp::init(argc, argv);
-    rclcpp::spin(std::make_shared<PingPongBotDriver>());
+    rclcpp::spin(std::make_shared<Driver>());
     rclcpp::shutdown();
     return 0;
 }

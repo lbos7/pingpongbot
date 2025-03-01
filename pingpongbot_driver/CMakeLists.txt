@@ -27,19 +27,19 @@ if(NOT WIRINGPI_INCLUDE_DIRS)
 endif()
 
 
-add_executable(pingpongbot_driver src/pingpongbot_driver.cpp src/driver.cpp)
-ament_target_dependencies(pingpongbot_driver rclcpp pingpongbot_msgs std_msgs std_srvs)
-target_include_directories(pingpongbot_driver PRIVATE ${WIRINGPI_INCLUDE_DIRS})
-target_link_libraries(pingpongbot_driver ${WIRINGPI_LIBRARIES})
+add_executable(driver src/driver.cpp src/interface.cpp)
+ament_target_dependencies(driver rclcpp pingpongbot_msgs std_msgs std_srvs)
+target_include_directories(driver PRIVATE ${WIRINGPI_INCLUDE_DIRS})
+target_link_libraries(driver ${WIRINGPI_LIBRARIES})
 
-target_include_directories(pingpongbot_driver
+target_include_directories(driver
   PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>  # during build
   $<INSTALL_INTERFACE:include>  # during install
 )
 
 install(TARGETS
-  pingpongbot_driver
+  driver
   DESTINATION lib/${PROJECT_NAME}
 )
 

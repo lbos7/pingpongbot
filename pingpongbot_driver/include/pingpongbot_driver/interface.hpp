@@ -49,6 +49,12 @@ namespace pingpongbot_driver {
             double radPerCount = .01570769;
             double accelScale = 0.001197;
             double gyroScale = 0.0175 * (2*M_PI)/360;
+            double xaOffset = 0;
+            double yaOffset = 0;
+            double zaOffset = 0;
+            double xgOffset = 0;
+            double ygOffset = 0;
+            double zgOffset = 0;
             int currentWheel1Duty;
             int currentWheel2Duty;
             int currentWheel3Duty;
@@ -72,6 +78,7 @@ namespace pingpongbot_driver {
             std::atomic<bool> wheel1ThreadRunning;
             std::thread wheel1PWMThread;
             std::array<int32_t, 3> getEncoderPulses();
+            pingpongbot_msgs::msg::IMU calculateIMUOffsets();
             void setup();
 
         public:
@@ -83,6 +90,7 @@ namespace pingpongbot_driver {
             pingpongbot_msgs::msg::WheelAngles getWheelAngles();
             std::array<int8_t, 3> getSpeeds();
             pingpongbot_msgs::msg::IMU getIMUData();
+            void setIMUOffsets(pingpongbot_msgs::msg::IMU data);
             void pwmThread();
     };
 }
