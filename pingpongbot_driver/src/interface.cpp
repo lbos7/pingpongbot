@@ -1,12 +1,12 @@
-#include "pingpongbot_driver/driver.hpp"
+#include "pingpongbot_driver/interface.hpp"
 
 namespace pingpongbot_driver {
 
-    Driver::Driver() {
+    Interface::Interface() {
         setup();
     }
 
-    Driver::~Driver() {
+    Interface::~Interface() {
         zeroSpeeds();
         this->wheel1ThreadRunning.store(false);
         if (wheel1PWMThread.joinable()) {
@@ -20,15 +20,15 @@ namespace pingpongbot_driver {
         digitalWrite(this->wheel3INB, LOW);
     }
 
-    std::array<int8_t, 3> Driver::getSpeeds() {
+    std::array<int8_t, 3> Interface::getSpeeds() {
         std::array<int8_t, 3> speeds;
         for (int i = 0; i < 3; i++) {
-            speeds[i] = wiringPiI2CReadReg8(file, motorFixedPWMAddr + i);
+            speeds[i] = wiringPiI2CReadReg8(this->fd, this->motorFixedPWMAddr + i);
         }
         return speeds;
     }
 
-    void Driver::setSpeeds(pingpongbot_msgs::msg::WheelSpeeds speeds) {
+    void Interface::setSpeeds(pingpongbot_msgs::msg::WheelSpeeds speeds) {
         this->currentWheel1Duty = std::clamp((int) (std::abs(speeds.u1 * this->motor1RadPS2PWM)), 0, 100);
         this->currentWheel2Duty = std::clamp((int) (std::abs(speeds.u2 * this->motor1RadPS2PWM)), 0, 100);
         this->currentWheel3Duty = std::clamp((int) (std::abs(speeds.u3 * this->motor1RadPS2PWM)), 0, 100);
@@ -64,13 +64,13 @@ namespace pingpongbot_driver {
 
 
 
-    std::array<int32_t, 3> Driver::getEncoderPulses() {
+    std::array<int32_t, 3> Interface::getEncoderPulses() {
         std::array<int32_t, 3> counts = {0, 0, 0};
 
         // Read 16 bytes of encoder data from the I2C device
         uint8_t encoderData[16];
         for (int i = 0; i < 16; i++) {
-            encoderData[i] = wiringPiI2CReadReg8(this->file, this->motorEncoderTotalAddr + i);
+            encoderData[i] = wiringPiI2CReadReg8(this->fd, this->motorEncoderTotalAddr + i);
         }
 
         // Process the data to extract counts
@@ -91,18 +91,19 @@ namespace pingpongbot_driver {
     }
 
 
-    void Driver::setup() {
-        this->file = wiringPiI2CSetup(this->motorEncoderTotalAddr);
-        if (this->file == -1) {
-            // Handle I2C initialization failure
-            std::cerr << "Failed to initialize I2C device" << std::endl;
+    void Interface::setup() {
+        this->fd = wiringPiI2CSetup(this->motorEncoderTotalAddr);
+        this->fi = wiringPiI2CSetup(this->imuAddr);
+        if (this->fd == -1) {
+            std::cerr << "Failed to initialize Driver Board" << std::endl;
+            exit(1);
         }
-        if (file < 0) {
-            std::cerr << "Failed to initialize I2C device" << std::endl;
-            std::exit(EXIT_FAILURE);
+        if (this->fi == -1) {
+            std::cerr << "Failed to initialize IMU" << std::endl;
+            exit(1);
         }
-        wiringPiI2CWriteReg8(file, motorTypeAddr, motorType);
-        wiringPiI2CWriteReg8(file, motorEncoderPolarityAddr, motorPolarity);
+        wiringPiI2CWriteReg8(this->fd, this->motorTypeAddr, this->motorType);
+        wiringPiI2CWriteReg8(this->fd, this->motorEncoderPolarityAddr, this->motorPolarity);
         if (wiringPiSetupGpio() == -1) {
             std::cerr << "WiringPi initialization failed!" << std::endl;
             std::exit(EXIT_FAILURE);
@@ -120,11 +121,11 @@ namespace pingpongbot_driver {
 
         pwmSetMode(PWM_MODE_MS); // Mark-Space mode for precise frequency
         pwmSetRange(this->pwmRange);  // Set range for duty cycle (0-100 for percentage control)
-        this->wheel1PWMThread = std::thread(&Driver::pwmThread, this);
+        this->wheel1PWMThread = std::thread(&Interface::pwmThread, this);
 
     }
 
-    pingpongbot_msgs::msg::WheelAngles Driver::getWheelAngles() {
+    pingpongbot_msgs::msg::WheelAngles Interface::getWheelAngles() {
         std::array<int32_t, 3> counts = getEncoderPulses();
         pingpongbot_msgs::msg::WheelAngles adjustedWheelAngles;
         adjustedWheelAngles.theta1 = counts[0] * radPerCount;
@@ -133,7 +134,7 @@ namespace pingpongbot_driver {
         return adjustedWheelAngles;
     }
 
-    void Driver::resetEncoderPulses() {
+    void Interface::resetEncoderPulses() {
         bool done = false;
         bool countsReset[3] = {false, false, false};
         std::array<int32_t, 3> counts;
@@ -144,7 +145,7 @@ namespace pingpongbot_driver {
         while (!done) {
             // Write the encoder reset data (16 bytes of zeros)
             for (int i = 0; i < 16; i++) {
-                wiringPiI2CWriteReg8(this->file, this->motorEncoderTotalAddr + i, encoderZero[i]);
+                wiringPiI2CWriteReg8(this->fd, this->motorEncoderTotalAddr + i, encoderZero[i]);
             }
     
             // Read the encoder pulses to check if reset was successful
@@ -160,16 +161,48 @@ namespace pingpongbot_driver {
         }
     }
 
-    void Driver::zeroSpeeds() {
+    void Interface::zeroSpeeds() {
         pingpongbot_msgs::msg::WheelSpeeds speeds;
         speeds.u1 = 0;
         speeds.u2 = 0;
         speeds.u3 = 0;
         this->setSpeeds(speeds);
     }
+
+    pingpongbot_msgs::msg::IMU Interface::getIMUData() {
+        uint8_t xaLow = wiringPiI2CReadReg8(this->fi, this->xAccelLowAddr);
+        uint8_t xaHigh = wiringPiI2CReadReg8(this->fi, this->xAccelHighAddr);
+        uint8_t yaLow = wiringPiI2CReadReg8(this->fi, this->yAccelLowAddr);
+        uint8_t yaHigh = wiringPiI2CReadReg8(this->fi, this->yAccelHighAddr);
+        uint8_t zaLow = wiringPiI2CReadReg8(this->fi, this->zAccelLowAddr);
+        uint8_t zaHigh = wiringPiI2CReadReg8(this->fi, this->zAccelHighAddr);
+        uint8_t xgLow = wiringPiI2CReadReg8(this->fi, this->xGyroLowAddr);
+        uint8_t xgHigh = wiringPiI2CReadReg8(this->fi, this->xGyroHighAddr);
+        uint8_t ygLow = wiringPiI2CReadReg8(this->fi, this->yGyroLowAddr);
+        uint8_t ygHigh = wiringPiI2CReadReg8(this->fi, this->yGyroHighAddr);
+        uint8_t zgLow = wiringPiI2CReadReg8(this->fi, this->zGyroLowAddr);
+        uint8_t zgHigh = wiringPiI2CReadReg8(this->fi, this->zGyroHighAddr);
+
+        int16_t xaRaw = (int16_t)((xaHigh << 8) | xaLow);
+        int16_t yaRaw = (int16_t)((yaHigh << 8) | yaLow);
+        int16_t zaRaw = (int16_t)((zaHigh << 8) | zaLow);
+        int16_t xgRaw = (int16_t)((xgHigh << 8) | xgLow);
+        int16_t ygRaw = (int16_t)((ygHigh << 8) | ygLow);
+        int16_t zgRaw = (int16_t)((zgHigh << 8) | zgLow);
+
+        pingpongbot_msgs::msg::IMU msg;
+        msg.xa = xaRaw * this->accelScale;
+        msg.ya = yaRaw * this->accelScale;
+        msg.za = zaRaw * this->accelScale;
+        msg.xg = xgRaw * this->gyroScale;
+        msg.yg = ygRaw * this->gyroScale;
+        msg.zg = zgRaw * this->gyroScale;
+        
+        return msg;
+    }
     
 
-    void Driver::pwmThread() {
+    void Interface::pwmThread() {
 
         while (this->wheel1ThreadRunning.load()) {
             int highTime = (this->pwmPeriod * this->wheel1DutyCycle.load()) / 100;  // Load current duty cycle

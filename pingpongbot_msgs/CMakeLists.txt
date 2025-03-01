@@ -26,6 +26,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/WheelSpeeds.msg"
   "msg/WheelAngles.msg"
   "msg/Error.msg"
+  "msg/IMU.msg"
   DEPENDENCIES builtin_interfaces
 )
 

@@ -1,5 +1,5 @@
-#ifndef DRIVER_HPP
-#define DRIVER_HPP
+#ifndef INTERFACE_HPP
+#define INTERFACE_HPP
 
 #include <algorithm>
 #include <array>
@@ -15,10 +15,11 @@
 
 #include "pingpongbot_msgs/msg/wheel_speeds.hpp"
 #include "pingpongbot_msgs/msg/wheel_angles.hpp"
+#include "pingpongbot_msgs/msg/imu.hpp"
 
 namespace pingpongbot_driver {
 
-    class Driver {
+    class Interface {
 
         private:
             uint8_t motorDriverAddr = 0x34;
@@ -27,14 +28,32 @@ namespace pingpongbot_driver {
             uint8_t motorFixedPWMAddr = 0x1F;
             uint8_t motorFixedSpeedAddr = 0x33;
             uint8_t motorEncoderTotalAddr = 0x3C;
+            uint8_t imuAddr = 0x6A;
+            uint8_t xAccelLowAddr = 0x28;
+            uint8_t xAccelHighAddr = 0x29;
+            uint8_t yAccelLowAddr = 0x2A;
+            uint8_t yAccelHighAddr = 0x2B;
+            uint8_t zAccelLowAddr = 0x2C;
+            uint8_t zAccelHighAddr = 0x2D;
+            uint8_t xGyroLowAddr = 0x22;
+            uint8_t xGyroHighAddr = 0x23;
+            uint8_t yGyroLowAddr = 0x24;
+            uint8_t yGyroHighAddr = 0x25;
+            uint8_t zGyroLowAddr = 0x26;
+            uint8_t zGyroHighAddr = 0x27;
+            uint8_t accelSetupAddr = 0x10;
+            uint8_t gyroSetupAddr = 0x11;
             double motor1RadPS2PWM = .60122 * .63;
             double motor2RadPS2PWM = .61565 * .63;
             double motor3RadPS2PWM = .61747 * .63;
             double radPerCount = .01570769;
+            double accelScale = 0.001197;
+            double gyroScale = 0.0175 * (2*M_PI)/360;
             int currentWheel1Duty;
             int currentWheel2Duty;
             int currentWheel3Duty;
-            int file;
+            int fd;
+            int fi;
             uint8_t motorType = 0;
             uint8_t motorPolarity = 1;
             int wheel1PWM = 16;
@@ -56,13 +75,14 @@ namespace pingpongbot_driver {
             void setup();
 
         public:
-            Driver();
-            ~Driver();
+            Interface();
+            ~Interface();
             void setSpeeds(pingpongbot_msgs::msg::WheelSpeeds speeds);
             void resetEncoderPulses();
             void zeroSpeeds();
             pingpongbot_msgs::msg::WheelAngles getWheelAngles();
             std::array<int8_t, 3> getSpeeds();
+            pingpongbot_msgs::msg::IMU getIMUData();
             void pwmThread();
     };
 }

@@ -1,0 +1,6 @@
+float64 xa # linear accel in x direction (m/s2)
+float64 ya # linear accel in y direction (m/s2)
+float64 za # linear accel in z direction (m/s2)
+float64 xg # angular velocity about x-axis (rad/s)
+float64 yg # angular velocity about y-axis (rad/s)
+float64 zg # angular velocity about z-axis (rad/s)
