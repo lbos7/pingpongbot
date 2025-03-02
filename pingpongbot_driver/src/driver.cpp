@@ -56,7 +56,7 @@ class Driver : public rclcpp::Node {
             // speeds.u2 = 60;
             // speeds.u3 = 60;
             this->interface->setSpeeds(speeds);
-            auto current_time = this->get_clock()->now();
+            auto current_time = steady_clock.now();
             if ((current_time - last_heartbeat_time).seconds() > 0.175) {
                 // RCLCPP_WARN(this->get_logger(), "Lost connection! Stopping wheels.");
                 this->interface->zeroSpeeds();
@@ -123,23 +123,24 @@ class Driver : public rclcpp::Node {
 
         void heartbeatCallback(const std_msgs::msg::Empty & msg) {
             (void) msg;
-            last_heartbeat_time = this->clock_.now();
+            last_heartbeat_time = steady_clock.now();
         }
 
         void resetEncoder(const std::shared_ptr<std_srvs::srv::Empty::Request> request,
             std::shared_ptr<std_srvs::srv::Empty::Response> response) {
+                (void) request;
                 this->interface->resetEncoderPulses();
         }
 
         std::shared_ptr<pingpongbot_driver::Interface> interface;
         pingpongbot_msgs::msg::WheelSpeeds speeds;
+        rclcpp::Clock steady_clock;  // Define a steady clock
+        rclcpp::Time prev_time;
         rclcpp::Time last_heartbeat_time;
         double yaw = 0;
         double yaw_variance = 0;
         double gyro_noise_density = .0002618;
-        rclcpp::Time prev_time = this->get_clock()->now();
         rclcpp::TimerBase::SharedPtr timer_;
-        rclcpp::Clock clock_;
         rclcpp::Publisher<pingpongbot_msgs::msg::WheelAngles>::SharedPtr wheel_angles_pub_;
         rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imu_pub_;
         rclcpp::Subscription<pingpongbot_msgs::msg::WheelSpeeds>::SharedPtr wheel_speeds_sub_;
