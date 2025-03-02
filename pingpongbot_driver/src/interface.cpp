@@ -92,7 +92,7 @@ namespace pingpongbot_driver {
 
 
     void Interface::setup() {
-        this->fd = wiringPiI2CSetup(this->motorEncoderTotalAddr);
+        this->fd = wiringPiI2CSetup(this->motorDriverAddr);
         this->fi = wiringPiI2CSetup(this->imuAddr);
         if (this->fd == -1) {
             std::cerr << "Failed to initialize Driver Board" << std::endl;
@@ -102,6 +102,10 @@ namespace pingpongbot_driver {
             std::cerr << "Failed to initialize IMU" << std::endl;
             exit(1);
         }
+        if (wiringPiSetupGpio() == -1) {
+            std::cerr << "WiringPi initialization failed!" << std::endl;
+            std::exit(EXIT_FAILURE);
+        }
         wiringPiI2CWriteReg8(fd, this->accelSetupAddr, 0b01101010);
         wiringPiI2CWriteReg8(fd, this->gyroSetupAddr, 0b01100100);
         wiringPiI2CWriteReg8(this->fd, this->motorTypeAddr, this->motorType);
@@ -109,11 +113,6 @@ namespace pingpongbot_driver {
 
         pingpongbot_msgs::msg::IMU offsets = this->calculateIMUOffsets();
         this->setIMUOffsets(offsets);
-
-        if (wiringPiSetupGpio() == -1) {
-            std::cerr << "WiringPi initialization failed!" << std::endl;
-            std::exit(EXIT_FAILURE);
-        }
 
         pinMode(this->wheel1PWM, OUTPUT);
         pinMode(this->wheel1INA, OUTPUT);
