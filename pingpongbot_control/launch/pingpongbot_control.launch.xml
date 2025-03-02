@@ -1,4 +1,6 @@
 <launch>
+
+    <arg name="use_sim_time" default="false"/>
     
     <group>
         <include file="$(find-pkg-share pingpongbot_description)/launch/view_robot.launch.xml" >
@@ -18,6 +20,8 @@
         <remap from="joint_states" to="joint_states"/>
         <remap from="cmd_vel" to="cmd_vel"/>
         <remap from="reached_goal" to="reached_goal"/>
+        <remap from="odom" to="odom"/>
+        <remap from="odometry/filtered" to="odometry/filtered"/>
         <param from="$(find-pkg-share pingpongbot_control)/config/robot_dimensions.yaml"/>
     </node>
 
@@ -28,6 +32,19 @@
         <remap from="error" to="error"/>
         <remap from="reached_goal" to="reached_goal"/>
         <param from="$(find-pkg-share pingpongbot_control)/config/controller.yaml"/>
+    </node>
+
+    <node pkg="robot_localization" type="ekf_node" name="ekf_filter_node" output="screen">
+        <param name="use_sim_time" value="$(arg use_sim_time)"/>
+        <param name="odom_frame" value="odom"/>
+        <param name="base_link_frame" value="base_footprint"/>
+        <param name="world_frame" value="odom"/>
+        <param name="imu0" value="imu"/>
+        <param name="odom0" value="odom"/>
+        <param name="imu0_config" value="$(find-pkg-share pingpongbot_control)/config/ekf.yaml"/>
+        <remap from="imu" to="imu"/>
+        <remap from="odom" to="odom"/>
+        <remap from="odometry/filtered" to="odometry/filtered"/>
     </node>
 
     <node pkg="rqt_reconfigure" exec="rqt_reconfigure"/>

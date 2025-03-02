@@ -46,8 +46,8 @@ class OdometryUpdate: public rclcpp::Node {
             odom_trans.header.frame_id = odom_id;
             odom_trans.child_frame_id = base_id;
 
-            timer_ = this->create_wall_timer(
-                std::chrono::milliseconds(10), std::bind(&OdometryUpdate::timerCallback, this));
+            // timer_ = this->create_wall_timer(
+            //     std::chrono::milliseconds(10), std::bind(&OdometryUpdate::timerCallback, this));
 
             odom_pub_ = this->create_publisher<nav_msgs::msg::Odometry>("odom", 10);
 
@@ -63,6 +63,9 @@ class OdometryUpdate: public rclcpp::Node {
 
             reached_goal_sub_ = this->create_subscription<std_msgs::msg::Bool>(
                 "reached_goal", 10, std::bind(&OdometryUpdate::reachedGoalCallback, this, std::placeholders::_1));
+
+            filt_odom_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
+                "filtered/odometry", 10, std::bind(&OdometryUpdate::filtOdomCallback, this, std::placeholders::_1));
 
             tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this, qos);
 
@@ -84,7 +87,18 @@ class OdometryUpdate: public rclcpp::Node {
 
     private:
         void timerCallback() {
-            tf_broadcaster_->sendTransform(odom_trans);
+            geometry_msgs::msg::TransformStamped trans;
+            trans.header.stamp = this->get_clock()->now();
+            trans.header.frame_id = odom_id;
+            trans.child_frame_id = base_id;
+            trans.transform.translation.x = filt_odom.pose.pose.position.x;
+            trans.transform.translation.y = filt_odom.pose.pose.position.y;
+            trans.transform.translation.z = filt_odom.pose.pose.position.z;
+            trans.transform.rotation.x = filt_odom.pose.pose.orientation.x;
+            trans.transform.rotation.y = filt_odom.pose.pose.orientation.y;
+            trans.transform.rotation.z = filt_odom.pose.pose.orientation.z;
+            trans.transform.rotation.w = filt_odom.pose.pose.orientation.w;
+            tf_broadcaster_->sendTransform(trans);
         }
         
         void jointStateCallback(const sensor_msgs::msg::JointState & msg) {
@@ -103,18 +117,22 @@ class OdometryUpdate: public rclcpp::Node {
                 odom_msg.header.stamp = current_time;
                 odom_msg.header.frame_id = odom_id;
                 odom_msg.child_frame_id = base_id;
-                odom_msg.pose.pose.position.x = alpha * new_trans.getOrigin().x() + (1 - alpha) * prev_trans.getOrigin().x();
-                odom_msg.pose.pose.position.y = alpha * new_trans.getOrigin().y() + (1 - alpha) * prev_trans.getOrigin().y();
-                odom_msg.pose.pose.orientation.x = alpha * new_trans.getRotation().normalized().getX() 
-                + (1 - alpha) * prev_trans.getRotation().normalized().getX();
-                odom_msg.pose.pose.orientation.y = alpha * new_trans.getRotation().normalized().getY() 
-                + (1 - alpha) * prev_trans.getRotation().normalized().getY();
-                odom_msg.pose.pose.orientation.z = alpha * new_trans.getRotation().normalized().getZ()
-                + (1 - alpha) * prev_trans.getRotation().normalized().getZ();
-                odom_msg.pose.pose.orientation.w = alpha * new_trans.getRotation().normalized().getW()
-                + (1 - alpha) * prev_trans.getRotation().normalized().getW();
-
-                odom_pub_->publish(odom_msg);
+                odom_msg.pose.pose.position.x = new_trans.getOrigin().x();
+                odom_msg.pose.pose.position.y = new_trans.getOrigin().y();
+                odom_msg.pose.pose.orientation.x = new_trans.getRotation().normalized().getX();
+                odom_msg.pose.pose.orientation.y = new_trans.getRotation().normalized().getY();
+                odom_msg.pose.pose.orientation.z = new_trans.getRotation().normalized().getZ();
+                odom_msg.pose.pose.orientation.w = new_trans.getRotation().normalized().getW();
+                // odom_msg.pose.pose.position.x = alpha * new_trans.getOrigin().x() + (1 - alpha) * prev_trans.getOrigin().x();
+                // odom_msg.pose.pose.position.y = alpha * new_trans.getOrigin().y() + (1 - alpha) * prev_trans.getOrigin().y();
+                // odom_msg.pose.pose.orientation.x = alpha * new_trans.getRotation().normalized().getX() 
+                // + (1 - alpha) * prev_trans.getRotation().normalized().getX();
+                // odom_msg.pose.pose.orientation.y = alpha * new_trans.getRotation().normalized().getY() 
+                // + (1 - alpha) * prev_trans.getRotation().normalized().getY();
+                // odom_msg.pose.pose.orientation.z = alpha * new_trans.getRotation().normalized().getZ()
+                // + (1 - alpha) * prev_trans.getRotation().normalized().getZ();
+                // odom_msg.pose.pose.orientation.w = alpha * new_trans.getRotation().normalized().getW()
+                // + (1 - alpha) * prev_trans.getRotation().normalized().getW();
 
                 // RCLCPP_INFO(get_logger(), "Location of 'base_link' in 'odom': [%.2f, %.2f]",
                 //         odom_msg.pose.pose.position.x, odom_msg.pose.pose.position.y);
@@ -134,6 +152,8 @@ class OdometryUpdate: public rclcpp::Node {
                 tf2::getEulerYPR(prev_trans_rotation, prev_yaw, prev_pitch, prev_roll);
 
                 odom_msg.twist.twist.angular.z = (new_yaw - prev_yaw) / dt;
+
+                odom_pub_->publish(odom_msg);
 
                 odom_trans.header.stamp = current_time;
                 odom_trans.transform.translation.x = new_trans.getOrigin().x();
@@ -173,6 +193,10 @@ class OdometryUpdate: public rclcpp::Node {
                 zero.u3 = 0;
                 wheel_speeds_pub_->publish(zero);
             }
+        }
+
+        void filtOdomCallback(const nav_msgs::msg::Odometry & msg) {
+            filt_odom = msg;
         }
 
         void reachedGoalCallback(const std_msgs::msg::Bool & msg) {
@@ -218,18 +242,20 @@ class OdometryUpdate: public rclcpp::Node {
         sensor_msgs::msg::JointState currentJointState;
         nav_msgs::msg::Odometry odom_msg;
         geometry_msgs::msg::TransformStamped odom_trans;
+        nav_msgs::msg::Odometry filt_odom;
         bool reached_goal = false;
         bool prev_check = false;
         rclcpp::Time prev_time;
         double alpha;
         double dist_check;
-        rclcpp::TimerBase::SharedPtr timer_;
+        // rclcpp::TimerBase::SharedPtr timer_;
         rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
         rclcpp::Publisher<pingpongbot_msgs::msg::WheelSpeeds>::SharedPtr wheel_speeds_pub_;
         rclcpp::Publisher<pingpongbot_msgs::msg::WheelAngles>::SharedPtr wheel_angles_pub_;
         rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_state_sub_;
         rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_sub_;
         rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr reached_goal_sub_;
+        rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr filt_odom_sub_;
         std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
         rclcpp::Client<std_srvs::srv::Empty>::SharedPtr reset_encoder_cli_;
         rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr param_callback_handle_;
