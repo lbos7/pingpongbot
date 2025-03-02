@@ -33,9 +33,9 @@ namespace pingpongbot_driver {
         this->currentWheel2Duty = std::clamp((int) (std::abs(speeds.u2 * this->motor1RadPS2PWM)), 0, 100);
         this->currentWheel3Duty = std::clamp((int) (std::abs(speeds.u3 * this->motor1RadPS2PWM)), 0, 100);
 
-        this->wheel1DutyCycle.store(this->currentWheel1Duty);
-        pwmWrite(this->wheel2PWM, this->currentWheel2Duty);
-        pwmWrite(this->wheel3PWM, this->currentWheel3Duty);
+        this->setPWM(1, this->currentWheel1Duty);
+        this->setPWM(2, this->currentWheel2Duty);
+        this->setPWM(3, this->currentWheel3Duty);
         
         if (speeds.u1 > 0) {
             digitalWrite(this->wheel1INA, LOW);
@@ -94,6 +94,7 @@ namespace pingpongbot_driver {
     void Interface::setup() {
         this->fd = wiringPiI2CSetup(this->motorDriverAddr);
         this->fi = wiringPiI2CSetup(this->imuAddr);
+        this->fp = wiringPiI2CSetup(this->pwmDriverAddr);
         if (this->fd == -1) {
             std::cerr << "Failed to initialize Driver Board" << std::endl;
             exit(1);
@@ -106,28 +107,25 @@ namespace pingpongbot_driver {
             std::cerr << "WiringPi initialization failed!" << std::endl;
             std::exit(EXIT_FAILURE);
         }
-        wiringPiI2CWriteReg8(fd, this->accelSetupAddr, 0b01101010);
-        wiringPiI2CWriteReg8(fd, this->gyroSetupAddr, 0b01100100);
-        wiringPiI2CWriteReg8(this->fd, this->motorTypeAddr, this->motorType);
-        wiringPiI2CWriteReg8(this->fd, this->motorEncoderPolarityAddr, this->motorPolarity);
+        wiringPiI2CWriteReg8(this->fi, this->accelSetupAddr, 0b01101010);
+        wiringPiI2CWriteReg8(this->fi, this->gyroSetupAddr, 0b01100100);
+        wiringPiI2CWriteReg8(this->fi, this->motorTypeAddr, this->motorType);
+        wiringPiI2CWriteReg8(this->fi, this->motorEncoderPolarityAddr, this->motorPolarity);
 
         pingpongbot_msgs::msg::IMU offsets = this->calculateIMUOffsets();
         this->setIMUOffsets(offsets);
 
-        pinMode(this->wheel1PWM, OUTPUT);
         pinMode(this->wheel1INA, OUTPUT);
         pinMode(this->wheel1INB, OUTPUT);
-        pinMode(this->wheel2PWM, PWM_OUTPUT);
         pinMode(this->wheel2INA, OUTPUT);
         pinMode(this->wheel2INB, OUTPUT);
-        pinMode(this->wheel3PWM, PWM_OUTPUT);
         pinMode(this->wheel3INA, OUTPUT);
         pinMode(this->wheel3INB, OUTPUT);
 
-        pwmSetMode(PWM_MODE_MS); // Mark-Space mode for precise frequency
-        pwmSetRange(this->pwmRange);  // Set range for duty cycle (0-100 for percentage control)
-        this->wheel1PWMThread = std::thread(&Interface::pwmThread, this);
-
+        int mode1 = wiringPiI2CReadReg8(this->fp, this->modeAddr);
+        mode1 &= ~(1 << 4);
+        wiringPiI2CWriteReg8(this->fp, this->modeAddr, mode1);
+        wiringPiI2CWriteReg8(this->fp, this->prescalerAddr, (int) ((25000000 / (4096 * 1000)) - 1));
     }
 
     pingpongbot_msgs::msg::WheelAngles Interface::getWheelAngles() {
@@ -242,18 +240,22 @@ namespace pingpongbot_driver {
     }
     
 
-    void Interface::pwmThread() {
-
-        while (this->wheel1ThreadRunning.load()) {
-            int highTime = (this->pwmPeriod * this->wheel1DutyCycle.load()) / 100;  // Load current duty cycle
-            int lowTime = this->pwmPeriod - highTime;  // Calculate LOW time
-
-            digitalWrite(this->wheel1PWM, HIGH);  // Set the pin HIGH
-            delayMicroseconds(highTime);      // Wait for HIGH time
-            digitalWrite(this->wheel1PWM, LOW);   // Set the pin LOW
-            delayMicroseconds(lowTime);      // Wait for LOW time
+    void Interface::setPWM(int wheelNum, int dutyCycle) {
+        int offTime = (4096 * dutyCycle) / 100;  // Calculate OFF time
+    
+        uint8_t reg;
+        if (wheelNum == 1) {
+            reg = this->wheel1OnLAddr;
+        } else if (wheelNum == 2) {
+            reg = this->wheel2OnLAddr;
+        } else {
+            reg = this->wheel3OnLAddr;
         }
 
-        std::cout << "PWM thread stopped." << std::endl;
+        wiringPiI2CWriteReg8(this->fp, reg, 0);          // ON_L = 0
+        wiringPiI2CWriteReg8(this->fp, reg + 1, 0);      // ON_H = 0
+        wiringPiI2CWriteReg8(this->fp, reg + 2, offTime & 0xFF);       // OFF_L
+        wiringPiI2CWriteReg8(this->fp, reg + 3, (offTime >> 8) & 0xFF); // OFF_H
+        
     }
 }

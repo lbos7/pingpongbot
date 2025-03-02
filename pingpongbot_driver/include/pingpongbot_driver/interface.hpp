@@ -43,6 +43,21 @@ namespace pingpongbot_driver {
             uint8_t zGyroHighAddr = 0x27;
             uint8_t accelSetupAddr = 0x10;
             uint8_t gyroSetupAddr = 0x11;
+            uint8_t pwmDriverAddr = 0x40;
+            uint8_t wheel1OnLAddr = 0x22;
+            uint8_t wheel1OnHAddr = 0x23;
+            uint8_t wheel1OffLAddr = 0x24;
+            uint8_t wheel1OffHAddr = 0x25;
+            uint8_t wheel2OnLAddr = 0x12;
+            uint8_t wheel2OnHAddr = 0x13;
+            uint8_t wheel2OffLAddr = 0x14;
+            uint8_t wheel2OffHAddr = 0x15;
+            uint8_t wheel3OnLAddr = 0x32;
+            uint8_t wheel3OnHAddr = 0x33;
+            uint8_t wheel3OffLAddr = 0x34;
+            uint8_t wheel3OffHAddr = 0x35;
+            uint8_t modeAddr = 0x00;
+            uint8_t prescalerAddr = 0xFE;
             double motor1RadPS2PWM = .60122 * .63;
             double motor2RadPS2PWM = .61565 * .63;
             double motor3RadPS2PWM = .61747 * .63;
@@ -60,6 +75,7 @@ namespace pingpongbot_driver {
             int currentWheel3Duty;
             int fd;
             int fi;
+            int fp;
             uint8_t motorType = 0;
             uint8_t motorPolarity = 1;
             int wheel1PWM = 16;
@@ -79,6 +95,7 @@ namespace pingpongbot_driver {
             std::thread wheel1PWMThread;
             std::array<int32_t, 3> getEncoderPulses();
             pingpongbot_msgs::msg::IMU calculateIMUOffsets();
+            void setPWM(int wheelNum, int dutyCycle);
             void setup();
 
         public:
@@ -91,7 +108,6 @@ namespace pingpongbot_driver {
             std::array<int8_t, 3> getSpeeds();
             pingpongbot_msgs::msg::IMU getIMUData();
             void setIMUOffsets(pingpongbot_msgs::msg::IMU data);
-            void pwmThread();
     };
 }
 
