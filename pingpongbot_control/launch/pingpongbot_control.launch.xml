@@ -34,9 +34,15 @@
 
     <node pkg="robot_localization" exec="ekf_node">
         <param from="$(find-pkg-share pingpongbot_control)/config/ekf.yaml"/>
-        <remap from="imu/data" to="imu/data"/>
+        <remap from="imu/data/filtered" to="imu/data/filtered"/>
         <remap from="odom" to="odom"/>
         <remap from="odometry/filtered" to="odometry/filtered"/>
+    </node>
+
+    <node pkg="imu_filter_madgwick" exec="imu_filter_madgwick_node">
+        <param from="$(find-pkg-share pingpongbot_control)/config/imu_filter_config.yaml"/>
+        <remap from="imu/data_raw" to="imu/data_raw"/>
+        <remap from="imu/data/filtered" to="imu/data/filtered"/>
     </node>
 
     <node pkg="rqt_reconfigure" exec="rqt_reconfigure"/>

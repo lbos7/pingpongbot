@@ -65,7 +65,7 @@ class OdometryUpdate: public rclcpp::Node {
                 "reached_goal", 10, std::bind(&OdometryUpdate::reachedGoalCallback, this, std::placeholders::_1));
 
             filt_odom_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
-                "filtered/odometry", 10, std::bind(&OdometryUpdate::filtOdomCallback, this, std::placeholders::_1));
+                "odometry/filtered", 10, std::bind(&OdometryUpdate::filtOdomCallback, this, std::placeholders::_1));
 
             tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this, qos);
 
@@ -86,33 +86,28 @@ class OdometryUpdate: public rclcpp::Node {
         }
 
     private:
-        void timerCallback() {
-            geometry_msgs::msg::TransformStamped trans;
-            trans.header.stamp = this->get_clock()->now();
-            trans.header.frame_id = odom_id;
-            trans.child_frame_id = base_id;
-            trans.transform.translation.x = filt_odom.pose.pose.position.x;
-            trans.transform.translation.y = filt_odom.pose.pose.position.y;
-            trans.transform.translation.z = filt_odom.pose.pose.position.z;
-            trans.transform.rotation.x = filt_odom.pose.pose.orientation.x;
-            trans.transform.rotation.y = filt_odom.pose.pose.orientation.y;
-            trans.transform.rotation.z = filt_odom.pose.pose.orientation.z;
-            trans.transform.rotation.w = filt_odom.pose.pose.orientation.w;
-            tf_broadcaster_->sendTransform(trans);
-        }
+        // void timerCallback() {
+        //     geometry_msgs::msg::TransformStamped trans;
+        //     trans.header.stamp = this->get_clock()->now();
+        //     trans.header.frame_id = odom_id;
+        //     trans.child_frame_id = base_id;
+        //     trans.transform.translation.x = filt_odom.pose.pose.position.x;
+        //     trans.transform.translation.y = filt_odom.pose.pose.position.y;
+        //     trans.transform.translation.z = filt_odom.pose.pose.position.z;
+        //     trans.transform.rotation.x = filt_odom.pose.pose.orientation.x;
+        //     trans.transform.rotation.y = filt_odom.pose.pose.orientation.y;
+        //     trans.transform.rotation.z = filt_odom.pose.pose.orientation.z;
+        //     trans.transform.rotation.w = filt_odom.pose.pose.orientation.w;
+        //     tf_broadcaster_->sendTransform(trans);
+        // }
         
         void jointStateCallback(const sensor_msgs::msg::JointState & msg) {
             auto current_time = this->get_clock()->now();
             if (!first_joints_cb) {
-                auto relative_trans = omni_drive.odomUpdate(msg);
+                auto relative_trans = omni_drive.odomUpdate(msg, prev_msg);
                 auto new_trans = relative_trans * prev_trans;
 
                 auto dt = (current_time - prev_time).seconds();
-
-                // if (std::sqrt(std::pow(new_trans.getOrigin().getX() - prev_trans.getOrigin().getX(), 2)
-                //     + std::pow(new_trans.getOrigin().getY() - prev_trans.getOrigin().getY(), 2)) >= .2) {
-                //         new_trans = prev_trans;
-                // }
 
                 odom_msg.header.stamp = current_time;
                 odom_msg.header.frame_id = odom_id;
@@ -162,6 +157,7 @@ class OdometryUpdate: public rclcpp::Node {
 
                 // tf_broadcaster_->sendTransform(odom_trans);
                 prev_trans = new_trans;
+                prev_msg = msg;
 
             } else {
                 first_joints_cb = false;
@@ -171,6 +167,7 @@ class OdometryUpdate: public rclcpp::Node {
                 odom_trans.child_frame_id = base_id;
                 geometry_msgs::msg::Transform trans = odom_trans.transform;
                 tf2::fromMsg(trans, prev_trans);
+                prev_msg = msg;
                 // tf_broadcaster_->sendTransform(odom_trans);
 
             }
@@ -240,6 +237,7 @@ class OdometryUpdate: public rclcpp::Node {
         pingpongbot_control::OmniDrive omni_drive;
         tf2::Transform prev_trans;
         sensor_msgs::msg::JointState currentJointState;
+        sensor_msgs::msg::JointState prev_msg;
         nav_msgs::msg::Odometry odom_msg;
         geometry_msgs::msg::TransformStamped odom_trans;
         nav_msgs::msg::Odometry filt_odom;

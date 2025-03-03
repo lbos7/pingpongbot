@@ -1,9 +1,9 @@
 /**:
   ros__parameters:
-    Kp_x: 10.0
+    Kp_x: 3.0
     Ki_x: 0.0
     Kd_x: 0.0
-    Kp_y: 5.0
+    Kp_y: 3.0
     Ki_y: 0.0
     Kd_y: 0.0
     Kp_ang: 1.0

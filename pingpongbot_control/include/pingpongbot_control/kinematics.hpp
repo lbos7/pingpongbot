@@ -16,13 +16,12 @@ namespace pingpongbot_control {
         private:
             double d;
             double r;
-            pingpongbot_msgs::msg::WheelAngles wheelPositions;
 
         public:
             OmniDrive(){}
             OmniDrive(const double d, const double r);
             pingpongbot_msgs::msg::WheelSpeeds twist2WheelSpeeds(geometry_msgs::msg::Twist twist);
-            tf2::Transform odomUpdate(sensor_msgs::msg::JointState newState);
+            tf2::Transform odomUpdate(sensor_msgs::msg::JointState newState, sensor_msgs::msg::JointState oldState);
     };
 
 }

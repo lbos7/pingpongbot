@@ -1,0 +1,7 @@
+imu_filter_node:
+  ros__parameters:
+    input_topic: /imu/data_raw       # Input topic for raw IMU data
+    output_topic: /imu/data/filtered   # Output topic for filtered IMU data
+    frequency: 100.0              # Filter update frequency (in Hz)
+    use_mag: false               # Whether to use magnetometer data (true/false)
+    gravity: 9.81                # Gravity constant for accelerometer data (m/s^2)
