@@ -1,6 +1,4 @@
 <launch>
-
-    <arg name="use_sim_time" default="false"/>
     
     <group>
         <include file="$(find-pkg-share pingpongbot_description)/launch/view_robot.launch.xml" >
@@ -34,15 +32,9 @@
         <param from="$(find-pkg-share pingpongbot_control)/config/controller.yaml"/>
     </node>
 
-    <node pkg="robot_localization" type="ekf_node" name="ekf_filter_node" output="screen">
-        <param name="use_sim_time" value="$(arg use_sim_time)"/>
-        <param name="odom_frame" value="odom"/>
-        <param name="base_link_frame" value="base_footprint"/>
-        <param name="world_frame" value="odom"/>
-        <param name="imu0" value="imu"/>
-        <param name="odom0" value="odom"/>
-        <param name="imu0_config" value="$(find-pkg-share pingpongbot_control)/config/ekf.yaml"/>
-        <remap from="imu" to="imu"/>
+    <node pkg="robot_localization" exec="ekf_node">
+        <param from="$(find-pkg-share pingpongbot_control)/config/ekf.yaml"/>
+        <remap from="imu/data" to="imu/data"/>
         <remap from="odom" to="odom"/>
         <remap from="odometry/filtered" to="odometry/filtered"/>
     </node>
