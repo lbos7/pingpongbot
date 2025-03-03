@@ -37,26 +37,26 @@ namespace pingpongbot_driver {
         this->setPWM(2, this->currentWheel2Duty);
         this->setPWM(3, this->currentWheel3Duty);
         
-        if (speeds.u1 > 0) {
+        if (speeds.u1 < 0) {
             digitalWrite(this->wheel1INA, LOW);
             digitalWrite(this->wheel1INB, HIGH);
-        } else if (speeds.u1 < 0) {
+        } else if (speeds.u1 > 0) {
             digitalWrite(this->wheel1INA, HIGH);
             digitalWrite(this->wheel1INB, LOW);
         }
 
-        if (speeds.u2 > 0) {
+        if (speeds.u2 < 0) {
             digitalWrite(this->wheel2INA, LOW);
             digitalWrite(this->wheel2INB, HIGH);
-        } else if (speeds.u2 < 0) {
+        } else if (speeds.u2 > 0) {
             digitalWrite(this->wheel2INA, HIGH);
             digitalWrite(this->wheel2INB, LOW);
         }
 
-        if (speeds.u3 > 0) {
+        if (speeds.u3 < 0) {
             digitalWrite(this->wheel3INA, LOW);
             digitalWrite(this->wheel3INB, HIGH);
-        } else if (speeds.u3 < 0) {
+        } else if (speeds.u3 > 0) {
             digitalWrite(this->wheel3INA, HIGH);
             digitalWrite(this->wheel3INB, LOW);
         }
@@ -165,11 +165,15 @@ namespace pingpongbot_driver {
     }
 
     void Interface::zeroSpeeds() {
-        pingpongbot_msgs::msg::WheelSpeeds speeds;
-        speeds.u1 = 0;
-        speeds.u2 = 0;
-        speeds.u3 = 0;
-        this->setSpeeds(speeds);
+        this->setPWM(1, 0);
+        this->setPWM(2, 0);
+        this->setPWM(3, 0);
+        digitalWrite(this->wheel1INA, LOW);
+        digitalWrite(this->wheel1INB, LOW);
+        digitalWrite(this->wheel2INA, LOW);
+        digitalWrite(this->wheel2INB, LOW);
+        digitalWrite(this->wheel3INA, LOW);
+        digitalWrite(this->wheel3INB, LOW);
     }
 
     pingpongbot_msgs::msg::IMU Interface::getIMUData() {

@@ -4,7 +4,7 @@
         <remap from="wheel_speeds" to="wheel_speeds"/>
         <remap from="wheel_angles" to="wheel_angles"/>
         <remap from="heartbeat" to="heartbeat"/>
-        <remap from="imu" to="imu"/>
+        <remap from="imu/data_raw" to="imu/data_raw"/>
     </node>
 
 </launch>
