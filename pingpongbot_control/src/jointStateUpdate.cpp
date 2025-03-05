@@ -25,7 +25,7 @@ class JointStateUpdate : public rclcpp::Node {
     private:
         void timerCallback() {
             sensor_msgs::msg::JointState msg;
-            msg.header.frame_id = "base_footprint";
+            msg.header.frame_id = "base_link";
             msg.header.stamp = this->get_clock()->now();
             msg.name = {"wheel1_joint", "wheel2_joint", "wheel3_joint"};
             msg.velocity = {currentSpeeds.u1, currentSpeeds.u2, currentSpeeds.u3};

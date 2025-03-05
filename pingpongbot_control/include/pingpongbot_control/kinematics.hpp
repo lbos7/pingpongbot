@@ -21,7 +21,8 @@ namespace pingpongbot_control {
             OmniDrive(){}
             OmniDrive(const double d, const double r);
             pingpongbot_msgs::msg::WheelSpeeds twist2WheelSpeeds(geometry_msgs::msg::Twist twist);
-            tf2::Transform odomUpdate(sensor_msgs::msg::JointState newState, sensor_msgs::msg::JointState oldState);
+            // tf2::Transform odomUpdate(sensor_msgs::msg::JointState newState, sensor_msgs::msg::JointState oldState);
+            tf2::Transform odomUpdate(pingpongbot_msgs::msg::WheelAngles newState, pingpongbot_msgs::msg::WheelAngles oldState);
     };
 
 }
