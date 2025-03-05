@@ -1,8 +1,8 @@
 <launch>
 
     <include file="$(find-pkg-share realsense2_camera)/launch/rs_launch.py" >
-        <arg name="rgb_camera.color_profile" value="640,480,60"/>
-        <arg name="depth_module.depth_profile" value="640,480,60"/>
+        <arg name="rgb_camera.color_profile" value="640,480,30"/>
+        <arg name="depth_module.depth_profile" value="640,480,30"/>
         <arg name="align_depth.enable" value="true"/>
     </include>
 
@@ -10,6 +10,7 @@
     <node pkg="pingpongbot_vision" exec="tracker">
         <remap from="camera/camera/color/image_raw" to="camera/camera/color/image_raw"/>
         <remap from="camera/camera/aligned_depth_to_color/image_raw" to="camera/camera/aligned_depth_to_color/image_raw"/>
+        <param name="onnx_model_path" value="$(find-pkg-share pingpongbot_vision)/models/ppball_detection.onnx"/>
     </node>
 
 </launch>
