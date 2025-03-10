@@ -5,6 +5,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
+
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
@@ -14,19 +15,12 @@ find_package(cv_bridge REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(realsense2 REQUIRED)
 
-# Manually specify ONNX Runtime
-set(ONNXRUNTIME_DIR "/usr/local/onnxruntime") # Adjust if needed
-include_directories(${ONNXRUNTIME_DIR}/include)
-link_directories(${ONNXRUNTIME_DIR}/lib)
-
-include_directories(/usr/local/onnxruntime/include)
-link_directories(/usr/local/onnxruntime/lib)
 
 # Add the executable
 add_executable(tracker src/tracker.cpp)
 
 # Link the RealSense library explicitly
-target_link_libraries(tracker ${OpenCV_LIBS} realsense2 onnxruntime)  # Ensure that the RealSense library is linked
+target_link_libraries(tracker ${OpenCV_LIBS} realsense2)  # Ensure that the RealSense library is linked
 
 # Create executable
 ament_target_dependencies(tracker
