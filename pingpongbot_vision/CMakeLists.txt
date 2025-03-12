@@ -14,11 +14,9 @@ find_package(geometry_msgs REQUIRED)
 find_package(cv_bridge REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(realsense2 REQUIRED)
-find_package(apriltag_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
-# find_package(rosidl_runtime_cpp REQUIRED)
 
 
 
@@ -26,8 +24,8 @@ find_package(tf2_geometry_msgs REQUIRED)
 add_executable(tracker src/tracker.cpp)
 ament_target_dependencies(tracker rclcpp sensor_msgs geometry_msgs cv_bridge OpenCV realsense2)
 
-# add_executable(apriltagHandler src/apriltagHandler.cpp)
-# ament_target_dependencies(tracker rclcpp geometry_msgs tf2 tf2_ros tf2_geometry_msgs)
+add_executable(arena src/arena.cpp)
+ament_target_dependencies(tracker rclcpp geometry_msgs tf2 tf2_ros tf2_geometry_msgs)
 
 # Link the RealSense library explicitly
 target_link_libraries(tracker ${OpenCV_LIBS} realsense2)  # Ensure that the RealSense library is linked
@@ -36,9 +34,8 @@ target_link_libraries(tracker ${OpenCV_LIBS} realsense2)  # Ensure that the Real
 # Install
 install(TARGETS
     tracker
-    # apriltagHandler
+    arena
     DESTINATION lib/${PROJECT_NAME})
-
 
 install(DIRECTORY
     launch
