@@ -60,8 +60,23 @@ class Arena : public rclcpp::Node {
 
                 t_table.child_frame_id = "table";
                 tf_static_broadcaster_->sendTransform(t_table);
+
                 table_set = true;
+
+                geometry_msgs::msg::TransformStamped corner_to_center;
+                corner_to_center.header.stamp = this->get_clock()->now();
+                corner_to_center.header.frame_id = "table";
+                corner_to_center.child_frame_id = "table_center";
+                corner_to_center.transform.translation.x = .7625;
+                corner_to_center.transform.translation.y = .685;
+
+                tf2::Quaternion corner_to_center_q;
+                corner_to_center_q.setRPY(0.0, 0.0, M_PI);
+                corner_to_center.transform.rotation = tf2::toMsg(corner_to_center_q);
+
+                tf_static_broadcaster_->sendTransform(corner_to_center);
             }
+
 
 
         }
