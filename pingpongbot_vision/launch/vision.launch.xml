@@ -11,10 +11,13 @@
         <remap from="camera/camera/aligned_depth_to_color/image_raw" to="camera/camera/aligned_depth_to_color/image_raw"/>
     </node>
 
-    <node pkg="pingpongbot_vision" exec="arena"/>
+    <node pkg="pingpongbot_vision" exec="arena">
+        <remap from='visualization_marker_array' to='visualization_marker_array'/>
+        <param from='$(find-pkg-share pingpongbot_vision)/config/arena.yaml'/>
+    </node>
 
     <node pkg='apriltag_ros' exec='apriltag_node' args='--ros-args --log-level error'>
-        <param from='$(find-pkg-share pingpongbot_vision)/config/tags.yaml' />
+        <param from='$(find-pkg-share pingpongbot_vision)/config/tags.yaml'/>
         <remap from='image_rect' to='/camera/camera/color/image_raw'/>
         <remap from='camera_info' to='/camera/camera/camera_info'/>
     </node>

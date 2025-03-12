@@ -1,0 +1,6 @@
+/**:
+  ros__parameters:
+    table_width: 1.525
+    table_length: 2.74
+    marker_width: .1
+    marker_height: .2
