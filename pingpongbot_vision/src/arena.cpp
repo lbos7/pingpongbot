@@ -35,13 +35,13 @@ class Arena : public rclcpp::Node {
     private:
         void timerCallback() {
             try {
-                t_robot = tf_buffer_->lookupTransform("camera_link", "robot", tf2::TimePointZero);
-                t_table = tf_buffer_->lookupTransform("camera_link", "table", tf2::TimePointZero);
+                t_robot = tf_buffer_->lookupTransform("camera_link", "robot_tag", tf2::TimePointZero);
+                t_table = tf_buffer_->lookupTransform("camera_link", "table_tag", tf2::TimePointZero);
             } catch (const tf2::TransformException & ex) {
                 RCLCPP_WARN(  // Use WARN instead of INFO for errors
                     this->get_logger(), 
-                    "Could not transform %s to %s: %s",
-                    odom_id.c_str(), base_id.c_str(), ex.what());
+                    "Could not transform: %s",
+                    ex.what());
                 return;
             }
 
@@ -54,15 +54,15 @@ class Arena : public rclcpp::Node {
                 tf2::getEulerYPR(q_table_tf2, table_yaw, table_pitch, table_roll);
 
                 tf2::Quaternion q_table_tf2_adjusted;
-                q_table_tf2_adjusted.setRPY(0.0, table_pitch, 0.0);
+                q_table_tf2_adjusted.setRPY(0.0, table_pitch, table_yaw);
 
                 t_table.transform.rotation = tf2::toMsg(q_table_tf2_adjusted);
 
+                t_table.child_frame_id = "table";
                 tf_static_broadcaster_->sendTransform(t_table);
                 table_set = true;
             }
 
-            
 
         }
 

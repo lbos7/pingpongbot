@@ -21,5 +21,5 @@
         # optional list of tags
         tag:
             ids: [0, 1]            # tag ID
-            frames: [robot, table]  # optional frame name
+            frames: [robot_tag, table_tag]  # optional frame name
             sizes: [0.039, 0.069]   # optional tag-specific edge size

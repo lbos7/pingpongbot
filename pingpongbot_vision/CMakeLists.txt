@@ -24,11 +24,11 @@ find_package(tf2_geometry_msgs REQUIRED)
 add_executable(tracker src/tracker.cpp)
 ament_target_dependencies(tracker rclcpp sensor_msgs geometry_msgs cv_bridge OpenCV realsense2)
 
-add_executable(arena src/arena.cpp)
-ament_target_dependencies(tracker rclcpp geometry_msgs tf2 tf2_ros tf2_geometry_msgs)
-
 # Link the RealSense library explicitly
 target_link_libraries(tracker ${OpenCV_LIBS} realsense2)  # Ensure that the RealSense library is linked
+
+add_executable(arena src/arena.cpp)
+ament_target_dependencies(arena rclcpp geometry_msgs tf2 tf2_ros tf2_geometry_msgs)
 
 
 # Install
