@@ -14,25 +14,29 @@ find_package(geometry_msgs REQUIRED)
 find_package(cv_bridge REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(realsense2 REQUIRED)
+find_package(apriltag_msgs REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
+# find_package(rosidl_runtime_cpp REQUIRED)
+
 
 
 # Add the executable
 add_executable(tracker src/tracker.cpp)
+ament_target_dependencies(tracker rclcpp sensor_msgs geometry_msgs cv_bridge OpenCV realsense2)
+
+# add_executable(apriltagHandler src/apriltagHandler.cpp)
+# ament_target_dependencies(tracker rclcpp geometry_msgs tf2 tf2_ros tf2_geometry_msgs)
 
 # Link the RealSense library explicitly
 target_link_libraries(tracker ${OpenCV_LIBS} realsense2)  # Ensure that the RealSense library is linked
 
-# Create executable
-ament_target_dependencies(tracker
-  rclcpp 
-  sensor_msgs 
-  geometry_msgs
-  cv_bridge 
-  OpenCV
-  realsense2)
 
 # Install
-install(TARGETS tracker
+install(TARGETS
+    tracker
+    # apriltagHandler
     DESTINATION lib/${PROJECT_NAME})
 
 
@@ -41,8 +45,13 @@ install(DIRECTORY
     DESTINATION share/${PROJECT_NAME})
 
 install(DIRECTORY
-    models
+    config
     DESTINATION share/${PROJECT_NAME})
+
+include_directories(
+    ${tf2_INCLUDE_DIRS}
+    ${tf2_ros_INCLUDE_DIRS}
+    ${tf2_geometry_msgs_INCLUDE_DIRS})
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
