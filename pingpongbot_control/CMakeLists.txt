@@ -34,12 +34,16 @@ ament_target_dependencies(jointStateUpdate rclcpp sensor_msgs pingpongbot_msgs)
 add_executable(controller src/controller.cpp)
 ament_target_dependencies(controller rclcpp rcl_interfaces geometry_msgs tf2 tf2_ros tf2_geometry_msgs std_msgs pingpongbot_msgs)
 
+add_executable(commander src/commander.cpp)
+ament_target_dependencies(commander rclcpp geometry_msgs tf2 tf2_ros tf2_geometry_msgs)
+
 
 
 install(TARGETS
   odomUpdate
   jointStateUpdate
   controller
+  commander
   DESTINATION lib/${PROJECT_NAME}
 )
 

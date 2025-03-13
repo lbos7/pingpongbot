@@ -212,8 +212,7 @@ class Arena : public rclcpp::Node {
         }
 
         double table_width, table_length, marker_width, marker_height, table_offset;
-        geometry_msgs::msg::TransformStamped t_robot;
-        geometry_msgs::msg::TransformStamped t_table;
+        geometry_msgs::msg::TransformStamped t_robot, t_table;
         bool table_set = false;
         rclcpp::TimerBase::SharedPtr timer_;
         rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_marker_;
