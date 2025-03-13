@@ -25,11 +25,13 @@ class Arena : public rclcpp::Node {
             this->declare_parameter("table_length", rclcpp::ParameterType::PARAMETER_DOUBLE);
             this->declare_parameter("marker_width", rclcpp::ParameterType::PARAMETER_DOUBLE);
             this->declare_parameter("marker_height", rclcpp::ParameterType::PARAMETER_DOUBLE);
+            this->declare_parameter("table_offset", rclcpp::ParameterType::PARAMETER_DOUBLE);
 
             table_width = this->get_parameter("table_width").as_double();
             table_length = this->get_parameter("table_length").as_double();
             marker_width = this->get_parameter("marker_width").as_double();
             marker_height = this->get_parameter("marker_height").as_double();
+            table_offset = this->get_parameter("table_offset").as_double();
 
             rclcpp::QoS qos(10);
             qos.reliable();
@@ -84,6 +86,7 @@ class Arena : public rclcpp::Node {
                 corner_to_center.child_frame_id = "table_center";
                 corner_to_center.transform.translation.x = table_width/2;
                 corner_to_center.transform.translation.y = table_length/4;
+                corner_to_center.transform.translation.z = -table_offset;
 
                 tf2::Quaternion corner_to_center_q;
                 corner_to_center_q.setRPY(0.0, 0.0, M_PI);
@@ -201,7 +204,7 @@ class Arena : public rclcpp::Node {
 
         }
 
-        double table_width, table_length, marker_width, marker_height;
+        double table_width, table_length, marker_width, marker_height, table_offset;
         geometry_msgs::msg::TransformStamped t_robot;
         geometry_msgs::msg::TransformStamped t_table;
         bool table_set = false;
