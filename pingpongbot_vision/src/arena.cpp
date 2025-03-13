@@ -41,7 +41,7 @@ class Arena : public rclcpp::Node {
             timer_ = this->create_wall_timer(
                 std::chrono::milliseconds(1000), std::bind(&Arena::timerCallback, this));
 
-            marker_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("visualization_marker_array", qos);
+            pub_marker_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("visualization_marker_array", qos);
 
             tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this, qos);
 
@@ -159,7 +159,7 @@ class Arena : public rclcpp::Node {
                 visualization_msgs::msg::MarkerArray m_array;
                 m_array.markers = {m_back, m_left, m_front, m_right};
 
-                marker_pub_->publish(m_array);
+                pub_marker_->publish(m_array);
 
                 tf2::Quaternion q_robot_tf2;
                 tf2::fromMsg(t_robot.transform.rotation, q_robot_tf2);
@@ -216,12 +216,11 @@ class Arena : public rclcpp::Node {
         geometry_msgs::msg::TransformStamped t_table;
         bool table_set = false;
         rclcpp::TimerBase::SharedPtr timer_;
-        rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr marker_pub_;
+        rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_marker_;
         std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
         std::unique_ptr<tf2_ros::StaticTransformBroadcaster> tf_static_broadcaster_;
         std::shared_ptr<tf2_ros::TransformListener> tf_listener_{nullptr};
         std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
-        
 };
 
 int main(int argc, char **argv) {
