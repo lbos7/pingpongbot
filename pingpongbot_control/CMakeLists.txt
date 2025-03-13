@@ -38,7 +38,6 @@ add_executable(commander src/commander.cpp)
 ament_target_dependencies(commander rclcpp geometry_msgs tf2 tf2_ros tf2_geometry_msgs)
 
 
-
 install(TARGETS
   odomUpdate
   jointStateUpdate

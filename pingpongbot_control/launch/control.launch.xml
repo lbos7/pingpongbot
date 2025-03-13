@@ -32,6 +32,10 @@
         <param from="$(find-pkg-share pingpongbot_control)/config/controller.yaml"/>
     </node>
 
+    <node pkg="pingpongbot_control" exec="commander">
+        <remap from="ball_pos" to="ball_pos"/>
+    </node>
+
     <node pkg="robot_localization" exec="ekf_node">
         <param from="$(find-pkg-share pingpongbot_control)/config/ekf.yaml"/>
         <!-- <remap from="imu/data" to="imu/data"/> -->
