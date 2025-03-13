@@ -1,8 +1,0 @@
-<launch>
-    
-    <group>
-        <include file="$(find-pkg-share pingpongbot_control)/launch/pingpongbot_control.launch.xml"/>
-        <include file="$(find-pkg-share pingpongbot_vision)/launch/pingpongbot_vision.launch.xml"/>
-    </group>
-    
-</launch>

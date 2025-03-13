@@ -40,7 +40,7 @@
     </node>
 
     <!-- <node pkg="imu_filter_madgwick" exec="imu_filter_madgwick_node">
-        <!-- <param from="$(find-pkg-share pingpongbot_control)/config/imu_filter_config.yaml"/> -->
+        <param from="$(find-pkg-share pingpongbot_control)/config/imu_filter_config.yaml"/>
         <param name="use_mag" value="false"/>
         <param name="publish_tf" value="false"/>
         <remap from="imu/data_raw" to="imu/data_raw"/>

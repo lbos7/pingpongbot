@@ -1,4 +1,5 @@
 #include <chrono>
+#include <cmath>
 
 #include "rclcpp/rclcpp.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
@@ -168,21 +169,27 @@ class Arena : public rclcpp::Node {
                 tf2::getEulerYPR(q_robot_tf2, robot_yaw, robot_pitch, robot_roll);
 
                 tf2::Quaternion q_robot_tf2_adjusted;
-                q_robot_tf2_adjusted.setRPY(0.0, robot_pitch, robot_yaw);
+                q_robot_tf2_adjusted.setRPY(0.0, 0.0, robot_yaw);
 
                 t_robot.transform.rotation = tf2::toMsg(q_robot_tf2_adjusted);
 
                 t_robot.child_frame_id = "robot";
                 tf_broadcaster_->sendTransform(t_robot);
 
-                geometry_msgs::msg::TransformStamped robot_to_odom;
-                robot_to_odom.header.stamp = this->get_clock()->now();
-                robot_to_odom.header.frame_id = "robot";
-                robot_to_odom.child_frame_id = "odom";
-                robot_to_odom.transform.translation.y = -.0165;
-                robot_to_odom.transform.translation.z = -.237;
+                geometry_msgs::msg::TransformStamped cam_to_odom;
+                cam_to_odom.header.stamp = this->get_clock()->now();
+                cam_to_odom.header.frame_id = "camera_link";
+                cam_to_odom.child_frame_id = "odom";
+                cam_to_odom.transform.translation.x = t_robot.transform.translation.x;
+                cam_to_odom.transform.translation.y = t_robot.transform.translation.y;
+                cam_to_odom.transform.translation.z = t_table.transform.translation.z 
+                                                        + corner_to_center.transform.translation.z;
 
-                tf_static_broadcaster_->sendTransform(robot_to_odom);
+                tf2::Quaternion q_cam_to_odom_tf2;
+                q_cam_to_odom_tf2.setRPY(0.0, 0.0, robot_yaw + M_PI);
+                cam_to_odom.transform.rotation = tf2::toMsg(q_cam_to_odom_tf2);
+
+                tf_static_broadcaster_->sendTransform(cam_to_odom);
 
                 table_set = true;
             }
@@ -195,7 +202,7 @@ class Arena : public rclcpp::Node {
             tf2::getEulerYPR(q_robot_tf2, robot_yaw, robot_pitch, robot_roll);
 
             tf2::Quaternion q_robot_tf2_adjusted;
-            q_robot_tf2_adjusted.setRPY(0.0, robot_pitch, robot_yaw);
+            q_robot_tf2_adjusted.setRPY(0.0, 0.0, robot_yaw);
 
             t_robot.transform.rotation = tf2::toMsg(q_robot_tf2_adjusted);
 
