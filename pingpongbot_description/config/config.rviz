@@ -118,13 +118,13 @@ Visualization Manager:
         camera_color_frame:
           Value: false
         camera_color_optical_frame:
-          Value: false
+          Value: true
         camera_depth_frame:
           Value: false
         camera_depth_optical_frame:
           Value: false
         camera_link:
-          Value: true
+          Value: false
         odom:
           Value: true
         paddle:

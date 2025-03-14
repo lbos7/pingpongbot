@@ -1,0 +1,6 @@
+/**:
+  ros__parameters:
+    paddle_height: .3556
+    d: .15875
+    table_width: 1.525
+    table_length: 2.74

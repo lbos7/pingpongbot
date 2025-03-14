@@ -33,7 +33,9 @@
     </node>
 
     <node pkg="pingpongbot_control" exec="commander">
+        <param from="$(find-pkg-share pingpongbot_control)/config/commander.yaml"/>
         <remap from="ball_pos" to="ball_pos"/>
+        <remap from="goal_pose" to="goal_pose"/>
     </node>
 
     <node pkg="robot_localization" exec="ekf_node">

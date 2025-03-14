@@ -1,7 +1,10 @@
 #include <chrono>
+#include <cmath>
 
 #include "rclcpp/rclcpp.hpp"
 #include "geometry_msgs/msg/point_stamped.hpp"
+#include "geometry_msgs/msg/transform_stamped.hpp"
+#include "geometry_msgs/msg/pose_stamped.hpp"
 #include "tf2/LinearMath/Quaternion.h"
 #include "tf2/exceptions.h"
 #include "tf2/utils.h"
@@ -16,9 +19,20 @@ class Commander : public rclcpp::Node {
 
     public:
         Commander() : Node("commander") {
+            this->declare_parameter("paddle_height", rclcpp::ParameterType::PARAMETER_DOUBLE);
+            this->declare_parameter("d", rclcpp::ParameterType::PARAMETER_DOUBLE);
+            this->declare_parameter("table_width", rclcpp::ParameterType::PARAMETER_DOUBLE);
+            this->declare_parameter("table_length", rclcpp::ParameterType::PARAMETER_DOUBLE);
+
+            paddle_height = this->get_parameter("paddle_height").as_double();
+            d = this->get_parameter("d").as_double();
+            table_width = this->get_parameter("table_width").as_double();
+            table_length = this->get_parameter("table_length").as_double();
 
             timer_ = this->create_wall_timer(
                 std::chrono::milliseconds(10), std::bind(&Commander::timerCallback, this));
+
+            pub_goal_pose_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("goal_pose", 10);
 
             sub_ball_pos_ = this->create_subscription<geometry_msgs::msg::PointStamped>(
                 "ball_pos", 10, std::bind(&Commander::ballPosCallback, this, std::placeholders::_1));
@@ -30,12 +44,11 @@ class Commander : public rclcpp::Node {
 
     private:
         void timerCallback() {
-
         }
 
         void ballPosCallback(const geometry_msgs::msg::PointStamped & msg) {
             try {
-                t_camera_center = tf_buffer_->lookupTransform("camera_link", "table_center", tf2::TimePointZero);
+                t_camera_center = tf_buffer_->lookupTransform("camera_color_optical_frame", "table_center", tf2::TimePointZero);
             } catch (const tf2::TransformException & ex) {
                 RCLCPP_WARN(  // Use WARN instead of INFO for errors
                     this->get_logger(), 
@@ -47,18 +60,53 @@ class Commander : public rclcpp::Node {
             tf2::doTransform(msg, trans_ball_pos, t_camera_center);
 
             if (!first_bp_cb) {
+                current_time = this->get_clock()->now();
+                auto dt = (current_time - prev_time).seconds();
                 current_ball_pos = trans_ball_pos;
+                vx = (current_ball_pos.point.x - prev_ball_pos.point.x)/dt;
+                vy = (current_ball_pos.point.y - prev_ball_pos.point.y)/dt;
+                vz = (current_ball_pos.point.z - prev_ball_pos.point.z)/dt;
+                double t_hit = (vz + std::sqrt((vz * vz) + 2*g*(paddle_height - current_ball_pos.point.z)))/g;
+                contact_guess.header.stamp = current_time;
+                contact_guess.header.frame_id = "table_center";
+                contact_guess.point.x = current_ball_pos.point.x + vx*t_hit;
+                contact_guess.point.y = current_ball_pos.point.y + vy*t_hit;
+
+                goal_pose.header.stamp = current_time;
+                goal_pose.header.frame_id = "table_center";
+                goal_pose.pose.position = contact_guess.point;
+
+                if (goal_pose.pose.position.x > (table_width/2 - d)) {
+                    goal_pose.pose.position.x = (table_width/2 - d);
+                } else if (goal_pose.pose.position.x < (table_width/2 - d)*-1) {
+                    goal_pose.pose.position.x = (table_width/2 - d)*-1;
+                }
+
+                if (goal_pose.pose.position.y > (table_length/4 - d)) {
+                    goal_pose.pose.position.y = (table_length/4 - d);
+                } else if (goal_pose.pose.position.y < (table_length/4 - d)*-1) {
+                    goal_pose.pose.position.y = (table_length/4 - d)*-1;
+                }
+
+                pub_goal_pose_->publish(goal_pose);
+
                 prev_ball_pos = current_ball_pos;
+                prev_time = current_time;
             } else {
+                prev_time = this->get_clock()->now();
                 prev_ball_pos = trans_ball_pos;
                 first_bp_cb = false;
             }
         }
 
-        geometry_msgs::msg::PointStamped current_ball_pos, prev_ball_pos, trans_ball_pos;
+        geometry_msgs::msg::PointStamped current_ball_pos, prev_ball_pos, trans_ball_pos, contact_guess;
         geometry_msgs::msg::TransformStamped t_camera_center;
+        geometry_msgs::msg::PoseStamped goal_pose;
         bool first_bp_cb = true;
+        double vx = 0, vy = 0, vz = 0, g = 9.81, paddle_height, d, table_width, table_length;
+        rclcpp::Time current_time, prev_time;
         rclcpp::TimerBase::SharedPtr timer_;
+        rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_goal_pose_;
         rclcpp::Subscription<geometry_msgs::msg::PointStamped>::SharedPtr sub_ball_pos_;
         std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
         std::shared_ptr<tf2_ros::TransformListener> tf_listener_{nullptr};

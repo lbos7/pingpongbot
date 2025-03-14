@@ -55,8 +55,8 @@ private:
         cv::cvtColor(frame, hsv_frame, cv::COLOR_BGR2HSV);
 
         // Define the HSV range for the orange ping pong ball (as given)
-        cv::Scalar lower_orange(8, 164, 197);  // Lower bound of the HSV range
-        cv::Scalar upper_orange(25, 255, 255); // Upper bound of the HSV range
+        cv::Scalar lower_orange(8, 125, 164);  // Lower bound of the HSV range
+        cv::Scalar upper_orange(17, 255, 255); // Upper bound of the HSV range
 
         // Apply the mask to extract the ball based on the HSV thresholding
         cv::Mat mask;
