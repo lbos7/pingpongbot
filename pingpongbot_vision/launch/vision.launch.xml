@@ -1,6 +1,6 @@
 <launch>
 
-    <include file="$(find-pkg-share realsense2_camera)/launch/rs_launch.py" >
+    <include file="$(find-pkg-share realsense2_camera)/launch/rs_launch.py">
         <arg name="rgb_camera.color_profile" value="640,480,30"/>
         <arg name="depth_module.depth_profile" value="640,480,30"/>
         <arg name="align_depth.enable" value="true"/>

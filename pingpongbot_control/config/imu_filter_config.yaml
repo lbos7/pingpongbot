@@ -1,4 +1,4 @@
-imu_filter_node:
+/**:
   ros__parameters:
     input_topic: /imu/data_raw       # Input topic for raw IMU data
     output_topic: /imu/data/filtered   # Output topic for filtered IMU data

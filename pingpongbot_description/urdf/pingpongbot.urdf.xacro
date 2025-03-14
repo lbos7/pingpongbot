@@ -11,17 +11,9 @@
         <color rgba="1 1 1 1"/>
     </material>
 
-    <!-- <link name="base_footprint"/>
-
-    <joint name="base_joint" type="fixed">
-        <parent link="base_footprint"/>
-        <child link="base_link"/>
-        <origin xyz="0.0 0.0 ${wheel_radius}" rpy="0 0 0"/>
-    </joint> -->
-
     <link name="base_link">
         <visual>
-            <origin xyz="0.0 0.0 ${wheel_radius}" rpy="0 0 ${pi}"/>
+            <origin xyz="0.0 0.0 0.0" rpy="0 0 ${pi}"/>
             <geometry>
                 <mesh filename="package://pingpongbot_description/meshes/chassis.stl" scale="1.0 1.0 1.0"/>
             </geometry>
@@ -36,6 +28,15 @@
         </collision>
     </link>
 
+    <link name="base_footprint"/>
+
+    <joint name="base_joint" type="fixed">
+        <parent link="base_link"/>
+        <child link="base_footprint"/>
+        <origin xyz="0.0 0.0 ${-wheel_radius}" rpy="0 0 0"/>
+    </joint>
+
+
     <joint name="wheel1_joint" type="continuous">
         <parent link="base_link"/>
         <child link="wheel1"/>
@@ -45,7 +46,7 @@
 
     <link name="wheel1">
         <visual>
-            <origin xyz="0.0 ${wheel_radius} 0.0" rpy="0 0 0"/>
+            <origin xyz="0.0 0.0 0.0" rpy="0 0 0"/>
             <geometry>
                 <mesh filename="package://pingpongbot_description/meshes/omniwheel.stl" scale="1.0 1.0 1.0"/>
             </geometry>
@@ -69,7 +70,7 @@
 
     <link name="wheel2">
         <visual>
-            <origin xyz="0.0 ${wheel_radius} 0.0" rpy="0 0 0"/>
+            <origin xyz="0.0 0.0 0.0" rpy="0 0 0"/>
             <geometry>
                 <mesh filename="package://pingpongbot_description/meshes/omniwheel.stl" scale="1.0 1.0 1.0"/>
             </geometry>
@@ -93,7 +94,7 @@
 
     <link name="wheel3">
         <visual>
-            <origin xyz="0.0 ${wheel_radius} 0.0" rpy="0 0 0"/>
+            <origin xyz="0.0 0.0 0.0" rpy="0 0 0"/>
             <geometry>
                 <mesh filename="package://pingpongbot_description/meshes/omniwheel.stl" scale="1.0 1.0 1.0"/>
             </geometry>

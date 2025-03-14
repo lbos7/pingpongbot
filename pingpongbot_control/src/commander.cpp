@@ -51,10 +51,10 @@ class Commander : public rclcpp::Node {
                 try {
                     t_camera_center = tf_buffer_->lookupTransform("camera_color_optical_frame", "table_center", tf2::TimePointZero);
                 } catch (const tf2::TransformException & ex) {
-                    RCLCPP_WARN(  // Use WARN instead of INFO for errors
-                        this->get_logger(), 
-                        "Could not transform: %s",
-                        ex.what());
+                    // RCLCPP_WARN(  // Use WARN instead of INFO for errors
+                    //     this->get_logger(), 
+                    //     "Could not transform: %s",
+                    //     ex.what());
                     return;
                 }
                 looked_up = true;
@@ -71,14 +71,14 @@ class Commander : public rclcpp::Node {
                 current_ball_pos.point.x = trans_ball_pos.point.x;
                 current_ball_pos.point.y = trans_ball_pos.point.z;
                 current_ball_pos.point.z = trans_ball_pos.point.y;
-                RCLCPP_INFO(this->get_logger(),
-                "Ball position: x = %f, y = %f, z = %f, frame_id = %s",
-                msg.point.x, msg.point.y, msg.point.z,
-                msg.header.frame_id.c_str());
-                RCLCPP_INFO(this->get_logger(),
-                "Transformed ball position: x = %f, y = %f, z = %f, frame_id = %s",
-                trans_ball_pos.point.x, trans_ball_pos.point.y, trans_ball_pos.point.z,
-                trans_ball_pos.header.frame_id.c_str());
+                // RCLCPP_INFO(this->get_logger(),
+                // "Ball position: x = %f, y = %f, z = %f, frame_id = %s",
+                // msg.point.x, msg.point.y, msg.point.z,
+                // msg.header.frame_id.c_str());
+                // RCLCPP_INFO(this->get_logger(),
+                // "Transformed ball position: x = %f, y = %f, z = %f, frame_id = %s",
+                // trans_ball_pos.point.x, trans_ball_pos.point.y, trans_ball_pos.point.z,
+                // trans_ball_pos.header.frame_id.c_str());
 
                 vx = (current_ball_pos.point.x - prev_ball_pos.point.x)/dt;
                 vy = (current_ball_pos.point.y - prev_ball_pos.point.y)/dt;
@@ -88,7 +88,9 @@ class Commander : public rclcpp::Node {
                 if (discriminant < 0) {
                     goal_pose.header.stamp = current_time;
                     goal_pose.header.frame_id = "table_center";
-                    goal_pose.pose.position = current_ball_pos.point;
+                    goal_pose.pose.position.x = current_ball_pos.point.x;
+                    goal_pose.pose.position.y = 0;
+                    goal_pose.pose.position.z = 0;
 
                 } else if (discriminant > 0) {
                     double t_hit = (vz + std::sqrt(discriminant))/g;
@@ -99,7 +101,10 @@ class Commander : public rclcpp::Node {
 
                     goal_pose.header.stamp = current_time;
                     goal_pose.header.frame_id = "table_center";
-                    goal_pose.pose.position = contact_guess.point;
+                    // goal_pose.pose.position = contact_guess.point;
+                    goal_pose.pose.position.x = current_ball_pos.point.x;
+                    goal_pose.pose.position.y = 0;
+                    goal_pose.pose.position.z = 0;
                 }
 
                 if (goal_pose.pose.position.x > (table_width/2 - d)) {

@@ -39,7 +39,7 @@ class Arena : public rclcpp::Node {
             qos.transient_local();
 
             timer_ = this->create_wall_timer(
-                std::chrono::milliseconds(1000), std::bind(&Arena::timerCallback, this));
+                std::chrono::milliseconds(10), std::bind(&Arena::timerCallback, this));
 
             pub_marker_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("visualization_marker_array", qos);
 

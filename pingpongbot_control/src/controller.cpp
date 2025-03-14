@@ -35,7 +35,7 @@ class Controller : public rclcpp::Node {
             this->declare_parameter("Ki_ang", rclcpp::ParameterType::PARAMETER_DOUBLE);
             this->declare_parameter("Kd_ang", rclcpp::ParameterType::PARAMETER_DOUBLE);
             this->declare_parameter("odom_id", "odom");
-            this->declare_parameter("base_id", "base_link");
+            this->declare_parameter("base_id", "base_footprint");
             this->declare_parameter("thresh_lin", 0.055);
             this->declare_parameter("thresh_ang", 0.0349066);
             this->declare_parameter("min_speed", .75);
@@ -92,10 +92,10 @@ class Controller : public rclcpp::Node {
                 try {
                     t = tf_buffer_->lookupTransform("table_center", base_id, tf2::TimePointZero);
                 } catch (const tf2::TransformException & ex) {
-                    RCLCPP_WARN(  // Use WARN instead of INFO for errors
-                        this->get_logger(), 
-                        "Could not transform %s to %s: %s",
-                        "table_center", base_id.c_str(), ex.what());
+                    // RCLCPP_WARN(  // Use WARN instead of INFO for errors
+                    //     this->get_logger(), 
+                    //     "Could not transform %s to %s: %s",
+                    //     "table_center", base_id.c_str(), ex.what());
                     return;
                 }
 
