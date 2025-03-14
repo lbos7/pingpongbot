@@ -47,34 +47,60 @@ class Commander : public rclcpp::Node {
         }
 
         void ballPosCallback(const geometry_msgs::msg::PointStamped & msg) {
-            try {
-                t_camera_center = tf_buffer_->lookupTransform("camera_color_optical_frame", "table_center", tf2::TimePointZero);
-            } catch (const tf2::TransformException & ex) {
-                RCLCPP_WARN(  // Use WARN instead of INFO for errors
-                    this->get_logger(), 
-                    "Could not transform: %s",
-                    ex.what());
-                return;
+            if (!looked_up) {
+                try {
+                    t_camera_center = tf_buffer_->lookupTransform("camera_color_optical_frame", "table_center", tf2::TimePointZero);
+                } catch (const tf2::TransformException & ex) {
+                    RCLCPP_WARN(  // Use WARN instead of INFO for errors
+                        this->get_logger(), 
+                        "Could not transform: %s",
+                        ex.what());
+                    return;
+                }
+                looked_up = true;
             }
+
 
             tf2::doTransform(msg, trans_ball_pos, t_camera_center);
 
             if (!first_bp_cb) {
                 current_time = this->get_clock()->now();
                 auto dt = (current_time - prev_time).seconds();
-                current_ball_pos = trans_ball_pos;
+                current_ball_pos.header.stamp = current_time;
+                current_ball_pos.header.frame_id = "table_center";
+                current_ball_pos.point.x = trans_ball_pos.point.x;
+                current_ball_pos.point.y = trans_ball_pos.point.z;
+                current_ball_pos.point.z = trans_ball_pos.point.y;
+                RCLCPP_INFO(this->get_logger(),
+                "Ball position: x = %f, y = %f, z = %f, frame_id = %s",
+                msg.point.x, msg.point.y, msg.point.z,
+                msg.header.frame_id.c_str());
+                RCLCPP_INFO(this->get_logger(),
+                "Transformed ball position: x = %f, y = %f, z = %f, frame_id = %s",
+                trans_ball_pos.point.x, trans_ball_pos.point.y, trans_ball_pos.point.z,
+                trans_ball_pos.header.frame_id.c_str());
+
                 vx = (current_ball_pos.point.x - prev_ball_pos.point.x)/dt;
                 vy = (current_ball_pos.point.y - prev_ball_pos.point.y)/dt;
                 vz = (current_ball_pos.point.z - prev_ball_pos.point.z)/dt;
-                double t_hit = (vz + std::sqrt((vz * vz) + 2*g*(paddle_height - current_ball_pos.point.z)))/g;
-                contact_guess.header.stamp = current_time;
-                contact_guess.header.frame_id = "table_center";
-                contact_guess.point.x = current_ball_pos.point.x + vx*t_hit;
-                contact_guess.point.y = current_ball_pos.point.y + vy*t_hit;
+                double discriminant = vz*vz + 2*g*(paddle_height - current_ball_pos.point.z);
 
-                goal_pose.header.stamp = current_time;
-                goal_pose.header.frame_id = "table_center";
-                goal_pose.pose.position = contact_guess.point;
+                if (discriminant < 0) {
+                    goal_pose.header.stamp = current_time;
+                    goal_pose.header.frame_id = "table_center";
+                    goal_pose.pose.position = current_ball_pos.point;
+
+                } else if (discriminant > 0) {
+                    double t_hit = (vz + std::sqrt(discriminant))/g;
+                    contact_guess.header.stamp = current_time;
+                    contact_guess.header.frame_id = "table_center";
+                    contact_guess.point.x = current_ball_pos.point.x + vx*t_hit;
+                    contact_guess.point.y = current_ball_pos.point.y + vy*t_hit;
+
+                    goal_pose.header.stamp = current_time;
+                    goal_pose.header.frame_id = "table_center";
+                    goal_pose.pose.position = contact_guess.point;
+                }
 
                 if (goal_pose.pose.position.x > (table_width/2 - d)) {
                     goal_pose.pose.position.x = (table_width/2 - d);
@@ -102,7 +128,7 @@ class Commander : public rclcpp::Node {
         geometry_msgs::msg::PointStamped current_ball_pos, prev_ball_pos, trans_ball_pos, contact_guess;
         geometry_msgs::msg::TransformStamped t_camera_center;
         geometry_msgs::msg::PoseStamped goal_pose;
-        bool first_bp_cb = true;
+        bool first_bp_cb = true, looked_up = false;
         double vx = 0, vy = 0, vz = 0, g = 9.81, paddle_height, d, table_width, table_length;
         rclcpp::Time current_time, prev_time;
         rclcpp::TimerBase::SharedPtr timer_;

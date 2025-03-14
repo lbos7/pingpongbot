@@ -90,12 +90,12 @@ class Controller : public rclcpp::Node {
 
             if (!first_cb) {
                 try {
-                    t = tf_buffer_->lookupTransform(odom_id, base_id, tf2::TimePointZero);
+                    t = tf_buffer_->lookupTransform("table_center", base_id, tf2::TimePointZero);
                 } catch (const tf2::TransformException & ex) {
                     RCLCPP_WARN(  // Use WARN instead of INFO for errors
                         this->get_logger(), 
                         "Could not transform %s to %s: %s",
-                        odom_id.c_str(), base_id.c_str(), ex.what());
+                        "table_center", base_id.c_str(), ex.what());
                     return;
                 }
 
