@@ -63,7 +63,7 @@ class Driver : public rclcpp::Node {
 
             sensor_msgs::msg::Imu imu_msg;
             imu_msg.header.stamp = this->get_clock()->now();
-            imu_msg.header.frame_id = "base_footprint";
+            imu_msg.header.frame_id = "base_link";
             imu_msg.angular_velocity.x = data.xg;
             imu_msg.angular_velocity.y = data.yg;
             imu_msg.angular_velocity.z = data.zg;
@@ -72,6 +72,11 @@ class Driver : public rclcpp::Node {
             imu_msg.linear_acceleration.y = data.ya;
             imu_msg.linear_acceleration.z = data.za;
             imu_msg.angular_velocity_covariance = {1.500625e-6, 0, 0, 0, 1.500625e-6, 0, 0, 0, 1.500625e-6};
+
+            // RCLCPP_INFO(this->get_logger(), "Angular Velocity - x: %.2f, y: %.2f, z: %.2f",
+            //         imu_msg.angular_velocity.x, imu_msg.angular_velocity.y, imu_msg.angular_velocity.z);
+            // RCLCPP_INFO(this->get_logger(), "Linear Acceleration - x: %.2f, y: %.2f, z: %.2f",
+            //         imu_msg.linear_acceleration.x, imu_msg.linear_acceleration.y, imu_msg.linear_acceleration.z);
 
             yaw += data.zg*((current_time - prev_time).seconds());
             yaw_variance = gyro_noise_density * gyro_noise_density * ((current_time - prev_time).seconds()) * ((current_time - prev_time).seconds());
@@ -88,28 +93,28 @@ class Driver : public rclcpp::Node {
 
             imu_pub_->publish(imu_msg);
 
-            static pingpongbot_msgs::msg::WheelAngles prev_angles;  // Store previous wheel angles
+            // static pingpongbot_msgs::msg::WheelAngles prev_angles;  // Store previous wheel angles
 
-            RCLCPP_INFO(rclcpp::get_logger("wheel_logger"),
-                        "Wheel Angles: θ1: %.6f, θ2: %.6f, θ3: %.6f", 
-                        msg.theta1, msg.theta2, msg.theta3);
+            // RCLCPP_INFO(rclcpp::get_logger("wheel_logger"),
+            //             "Wheel Angles: θ1: %.6f, θ2: %.6f, θ3: %.6f", 
+            //             msg.theta1, msg.theta2, msg.theta3);
 
-            // Compute and log delta values (change in wheel angles)
-            double delta_theta1 = msg.theta1 - prev_angles.theta1;
-            double delta_theta2 = msg.theta2 - prev_angles.theta2;
-            double delta_theta3 = msg.theta3 - prev_angles.theta3;
+            // // Compute and log delta values (change in wheel angles)
+            // double delta_theta1 = msg.theta1 - prev_angles.theta1;
+            // double delta_theta2 = msg.theta2 - prev_angles.theta2;
+            // double delta_theta3 = msg.theta3 - prev_angles.theta3;
 
-            RCLCPP_INFO(rclcpp::get_logger("wheel_logger"),
-                        "ΔTheta: dθ1: %.6f, dθ2: %.6f, dθ3: %.6f",
-                        delta_theta1, delta_theta2, delta_theta3);
+            // RCLCPP_INFO(rclcpp::get_logger("wheel_logger"),
+            //             "ΔTheta: dθ1: %.6f, dθ2: %.6f, dθ3: %.6f",
+            //             delta_theta1, delta_theta2, delta_theta3);
 
-            // std::array<int8_t, 3> speedInts = driver->getSpeeds();
+            // std::array<int8_t, 3> speedInts = interface->getSpeeds();
 
             // Update previous angles
             // RCLCPP_INFO(rclcpp::get_logger("wheel_logger"),
             //             "Motor Speeds: 1: %.6f, 2: %.6f, 3: %.6f", 
             //             speeds[0], speeds[1], speeds[2]);
-            prev_angles = msg;
+            // prev_angles = msg;
             prev_time = current_time;
         }
 

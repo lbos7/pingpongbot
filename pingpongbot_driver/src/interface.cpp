@@ -108,9 +108,9 @@ namespace pingpongbot_driver {
             std::exit(EXIT_FAILURE);
         }
         wiringPiI2CWriteReg8(this->fi, this->accelSetupAddr, 0b01101010);
-        wiringPiI2CWriteReg8(this->fi, this->gyroSetupAddr, 0b01100100);
-        wiringPiI2CWriteReg8(this->fi, this->motorTypeAddr, this->motorType);
-        wiringPiI2CWriteReg8(this->fi, this->motorEncoderPolarityAddr, this->motorPolarity);
+        wiringPiI2CWriteReg8(this->fi, this->gyroSetupAddr, 0b01100000);
+        wiringPiI2CWriteReg8(this->fd, this->motorTypeAddr, this->motorType);
+        wiringPiI2CWriteReg8(this->fd, this->motorEncoderPolarityAddr, this->motorPolarity);
 
         pingpongbot_msgs::msg::IMU offsets = this->calculateIMUOffsets();
         this->setIMUOffsets(offsets);
