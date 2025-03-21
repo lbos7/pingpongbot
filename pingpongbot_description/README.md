@@ -5,7 +5,7 @@ ROS2 package with the description of the pingpongbot.
 Includes meshes for the chassis, omniwheels, and paddle.
 
 ## Launch Files
-`view_robot.launch.xml` - launches RVIZ and the necessary nodes to see the robot model.
+`view_robot.launch.xml` - This file launches RVIZ and the necessary nodes to see the robot model.
 
 ## RVIZ Window
 <p align="center">
