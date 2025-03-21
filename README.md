@@ -1,4 +1,4 @@
-# Ping Pong Bot
+# pingpongbot
 
 Author: Logan Boswell
 
