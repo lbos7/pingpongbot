@@ -29,18 +29,22 @@ In order to operate the system, clone this repository in a `ros2_ws/src/` direct
 #### Building
 
 Building on the Pi:
+
 `colcon build --packages-select pingpongbot_driver pingpongbot_msgs`
 
 Building on the Host Computer:
+
 `colcon build`
 
 #### Launching
 After the packages have been built on both the Pi and host computer, make sure both devices are on the same wifi network and ssh into the Pi from the host computer. If the physical setup has been completed and the realsense is connected to the host computer, the system is ready for operation.
 
 On the Pi:
+
 `ros2 launch pingpongbot_driver driver.launch.xml`
 
 On the Host Computer:
+
 `ros2 launch pingpongbot_bringup bringup.launch.xml`
 
 Refer to the READMEs for specific packages if there are questions regarding specific nodes, launchfiles, etc.
