@@ -16,6 +16,11 @@ This is a 10 week project with the ideal goal of building a omnidirectional robo
 - `pingpongbot_msgs` - custom messages for operation
 - `pingpongbot_vision` - conatins the nodes for pingpongbot computer vision functionality
 
+## Simplified Node Architecture
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/fb66bc31-dd9e-4318-917a-43254778ef61" width="600"/>
+</p>
+
 ## Operation
 
 #### Physical Setup
